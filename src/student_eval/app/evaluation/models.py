@@ -47,24 +47,22 @@ class StudentModel:
         
         1. Recibir la ifnormacion
         2. Cargar el CSV (Si existe)
-         2.1 Si existe, hace run aprtial fit
-         2.2 Si no existe, hace run fit
         3. Actualizar CSV
-        4. Guardar modelo y CSVexist
+        4. Entrenar modelo completo (no es óptimo, pero partial_fit no funciona bien)
+        5. Guardar modelo y CSVexist
         
-        5. Devolver estados iniciales de estudiante
+        6. Devolver estados iniciales de estudiante
         '''
      
-        
-        exists = False
         if os.path.exists(self.csv_path):
             # Cargar el CSV
             df = pd.read_csv(self.csv_path)
-            new_df = {"order_id": order_id,
-                      "user_id": user_id,
-                      "skill_name": skill_name,
-                      "correct": correct,
-                      "item_id": item_id}
+            new_df = {
+                    "order_id": order_id,
+                    "user_id": user_id,
+                    "skill_name": skill_name,
+                    "correct": correct,
+                    "item_id": item_id}
             new_df = pd.DataFrame(new_df)
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
@@ -72,27 +70,23 @@ class StudentModel:
             df = pd.concat([df, new_df], ignore_index=True)
             # TODO
             # Lógica para guardar el CSV
-            # df.to_csv(self.csv_path, index=False)
-            exists = True
+            df.to_csv(self.csv_path, index=False)
         else:
             # Crear el CSV
-            df = {"order_id": order_id,
-                  "user_id": user_id,
-                  "skill_name": skill_name,
-                  "correct": correct,
-                  "item_id": item_id}
+            df = {
+                "order_id": order_id,
+                "user_id": user_id,
+                "skill_name": skill_name,
+                "correct": correct,
+                "item_id": item_id}
             # Guardar el CSV
             df = pd.DataFrame(df)
             # TODO
             # Lógica para guardar el CSV
-            
-            # df.to_csv(self.csv_path, index=False)
-        print(df)
+            df.to_csv(self.csv_path, index=False)
+
         # Entrenamos según el caso        
-        if exists:
-            self.student_model = self.partial_train(new_df)
-        else:
-            self.student_model = self.train(df)
+        self.student_model = self.train(df)
         
         students_states = self.calculate_students_states()
         skills_states = self.calculate_skills_states()
@@ -102,21 +96,6 @@ class StudentModel:
             "skills_states": skills_states
         }
         
-    def partial_train(self, df):
-        '''
-        Entrenamiento parcial del modelo
-        '''
-        student_model = Model()
-        # Cargar el modelo
-        student_model.load(self.model_path)
-        # Entrenar el modelo
-        student_model.partial_fit(df)
-        # Guardar el modelo
-        # TODO
-        # Lógica para guardar el modelo
-        # student_model.save(self.model_path)
-        return student_model
-
     def train(self, df):
         '''
         Entrenamiento del modelo
@@ -127,9 +106,10 @@ class StudentModel:
                           multiprior="user_id",
                           forgets=True
                           )
+        
         # TODO
         # Lógica para guardar el modelo
-        # student_model.save(self.model_path)
+        student_model.save(self.model_path)
         return student_model
     
     def calculate_students_states(self):
