@@ -41,18 +41,23 @@ class StudentModel:
         # item ID no se usa en este caso, pero puede usarse para ver que 
         # preguntas son más o menos difíciles de aprender
         # Puedo introducir la lógica pero habría que entrenar otro modelo para ello
-        
-        '''
-        Logica para la primera evaluacion
-        
-        1. Recibir la ifnormacion
-        2. Cargar el CSV (Si existe)
-        3. Actualizar CSV
-        4. Entrenar modelo completo (no es óptimo, pero partial_fit no funciona bien)
-        5. Guardar modelo y CSVexist
-        
-        6. Devolver estados iniciales de estudiante
-        '''
+        """ Actualiza el dataset (de existir) y entrena el modelo.
+
+        Args:
+            order_id (int): Índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.
+            user_id (str): ID del estudiante.
+            skill_name (str): Nombre de la habilidad.
+            correct (int): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
+            item_id (str): ID de la pregunta. Se puede repetir indicando que se ha hecho varias veces la misma pregunta.
+
+        Raises:
+            ValueError: Si el modelo no ha sido entrenado o si los nombres de las columnas no coinciden.
+
+        Returns:
+            dict: Diccionario con los estados de los estudiantes y habilidades.
+                - students_states: DataFrame con los estados de los estudiantes.
+                - skills_states: DataFrame con los estados de las habilidades.
+        """
      
         if os.path.exists(self.csv_path):
             # Cargar el CSV
@@ -97,9 +102,14 @@ class StudentModel:
         }
         
     def train(self, df):
-        '''
-        Entrenamiento del modelo
-        '''
+        """
+        Entrena el modelo con los datos del Dataframe.
+
+        Args:
+            df (pd.Dataframe): DataFrame con los datos de entrenamiento.
+        Returns:
+            Model(pyBKT.models.Model): Modelo entrenado.
+        """
         student_model = Model(seed=SEED)
         # Entrenar el modelo
         student_model.fit(data=df,
