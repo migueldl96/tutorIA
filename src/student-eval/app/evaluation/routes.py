@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 from src.common.controllers.evaluation_results_controller import EvaluationResultsController
-from src.common.services.evaluations_service import EvaluationSQLServerService
+from src.common.services import AzureSQLService
 from .models import SomeRandomModel
 
 # Initialize the evaluation results service
-evaluation_results_service = EvaluationSQLServerService()
+evaluation_results_service = AzureSQLService()
 # Initialize the evaluation results controller with the service
 controller = EvaluationResultsController(evaluation_results_service)
 router = APIRouter(prefix="/evaluation")

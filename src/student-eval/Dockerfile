@@ -1,12 +1,20 @@
+FROM python:3.9.22-alpine3.21
 
-FROM python:3.9
+WORKDIR /app
 
-WORKDIR /code
+# Set the PYTHONPATH to the app directory
+ENV PYTHONPATH=/app
 
-COPY ./requirements.txt /code/requirements.txt
+COPY ./student-eval/requirements.txt /app/requirements.txt
+# Install gcc and g++
+RUN apk add --no-cache gcc g++
 
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+# Install unixodbc-dev
+RUN apk add --no-cache unixodbc-dev
 
-COPY ./ /code/app
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-CMD ["fastapi", "run", "app/main.py", "--port", "80", "--host", "0.0.0.0"]
+COPY ./common /app/src/common
+COPY ./student-eval/app/ /app/src/student-eval/app
+
+CMD ["python", "src/student-eval/app/main.py"]

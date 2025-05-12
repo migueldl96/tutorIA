@@ -1,0 +1,14 @@
+services:
+  student-evaluation:
+    build:
+      context: .
+      dockerfile: student-eval/Dockerfile
+    ports:
+      - "80:80"
+
+  content-generator:
+    build:
+      context: .
+      dockerfile: content_generator/Dockerfile
+    ports:
+      - "3001:3001"

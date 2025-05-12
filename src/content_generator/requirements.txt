@@ -1,7 +1,7 @@
-fastapi==0.109.2
-uvicorn==0.27.1
-pydantic==2.6.1
-pyodbc==5.0.1
-langchain==0.1.12
-langchain-openai==0.0.8
-python-dotenv==1.0.1 
+fastapi[standard]
+uvicorn
+pydantic
+pyodbc
+langchain
+langchain-openai
+python-dotenv

@@ -2,11 +2,15 @@ from typing import Any, Dict, List, Optional
 import pyodbc
 from .base_service import BaseService
 from src.common.dto.initial_evaluation_dto import InitialEvaluationDTO
+import os 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class AzureSQLService(BaseService):
     """Concrete implementation of BaseService for Azure SQL Server."""
     
-    def __init__(self, connection_string: str):
+    def __init__(self, connection_string: str = os.getenv("AZURE_SQL_CONNECTION_STRING")):
         """Initialize the Azure SQL Service.
         
         Args:
