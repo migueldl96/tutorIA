@@ -1,49 +1,242 @@
 import logging
-from typing import Dict, DefaultDict
+from typing import Dict, DefaultDict, List, TypedDict
 from collections import defaultdict
 import pandas as pd
 from pyBKT.models import Model, Roster
 import os
+import yaml
+import pickle
 
 # Si no se declara, el prior será 0 si estamos en multiprior
 # Si se declara aprende un prior general, y otro específico
-a_priori_probs = {
-}
+a_priori_probs = {}
 CSV_PATH = "ruta_al_csv.csv"
+EVALUATION_CSV_PATH = "ruta_al_csv_evaluacion.csv"
+EVALUATION_PATH = "ruta_roster_evaluacion"
 MODEL_PATH = ""
-SEED = 42   
-class StudentResult:
-    '''
-    This is a placeholder class for the result of the evaluation.
-    '''
-    def __init__(self):
-        self.maestry_prob = 0.0
-        self.correct_prob = 0.0
-        self.maestry_state = False
+SEED = 42
 
+
+class StudentResult(TypedDict):
+    maestry_prob : float
+    correct_prob : float
+    maestry_state : str
+
+class EvaluationResponse(TypedDict):
+    status: str
+    message: str
+    roster_paths: Dict[str, str]
+    
 class StudentModel:
-    '''
+    """
     This is a placeholder class for the model that evaluates the student.
-    '''
+    """
+
     def __init__(self):
         self.csv_path = CSV_PATH
         self.model_path = MODEL_PATH
+        self.evaluation_csv_path = EVALUATION_CSV_PATH
+        self.evaluation_path = EVALUATION_PATH
         self.student_model = None
         self.roster = None
         pass
 
-    def real_time_evaluation(self, user_id, skill_name, is_correct):
-        '''
-        Evaluacion en real time del estudiante.
-        '''
-        logger = logging.getLogger('uvicorn.error')
-        logger.info("Evaluating student data...")
+    def start_real_time_evaluation(
+        self, user_id: str, skill_names: List[str]
+    ) -> EvaluationResponse:
+        """
+        Inicia la evaluación en tiempo real para un estudiante y unas habilidades.
+        Crea un nuevo roster para el estudiante y guarda la configuración en un archivo YAML.
+        En caso de existir, devuelve su ruta.
         
-    def update_dataset(self, order_id, user_id, skill_name, correct, item_id, subject_id):
-        # item ID no se usa en este caso, pero puede usarse para ver que 
+        Args:
+            user_id (str): ID del estudiante.
+            skill_names (list[str]): Lista de nombres de habilidades.
+        Returns:
+            EvaluationResponse: Diccionario con el estado de la evaluación:
+                - status (str): 'ok' o 'error'.
+                - message (str): Mensaje explicativo.
+                - roster_paths (Dict[str, str]): Mapeo de cada habilidad a su archivo de roster.
+        """
+        # Plantilla de respuesta
+        response: EvaluationResponse = {
+        "status": "",
+        "message": "",
+        "roster_paths": {}
+        }
+
+        logger = logging.getLogger("uvicorn.error")
+        logger.info("Starting real time evaluation...")
+
+        # Comprobar ruta al archivo de configuración
+        if not os.path.exists(self.evaluation_path):
+            logger.error("Evaluation path does not exist")
+            response["status"] = "error"
+            response["message"] = "Evaluation path does not exist"
+            return response
+
+        # Path al archivo de configuración
+        roster_config_path = self.evaluation_path + "/roster_config.yaml"
+
+        if os.path.exists(roster_config_path):
+            with open(roster_config_path, "r") as file:
+                roster_config = yaml.safe_load(file) or {}
+        else:
+            roster_config = {}
+
+        user_entry = roster_config.setdefault(user_id, {})
+        existing_skills_map = user_entry.setdefault("skills", {})  
+        # existing_skills_map: { roster_path1: [skillA,skillB], roster_path2: [skillC], ... }
+
+        # Reusar modelos existentes skill a skill
+        used_paths = {}
+        for path, skills_in_roster in existing_skills_map.items():
+            for sk in skill_names:
+                if sk in skills_in_roster:
+                    used_paths[sk] = path
+
+        # Determinar qué skills aún no tienen roster
+        missing = [sk for sk in skill_names if sk not in used_paths]
+
+        # Si hay skills faltantes, crear un nuevo roster sólo para ellas
+        if missing:
+            # cargar modelo BKT
+            if not os.path.exists(self.model_path):
+                response.update(status="error",
+                                message="Model path does not exist")
+                return response
+            with open(self.model_path, "rb") as f:
+                student_model = pickle.load(f)
+
+            # crear roster para las 'missing'
+            roster = Roster(students=[user_id],  # o tu lista de usuarios
+                            skills=missing,
+                            model=student_model)
+
+            # definir ruta donde guardarlo
+            skills_str = "_".join(missing)
+            roster_fname = f"roster_{user_id}_{skills_str}.pkl"
+            roster_path = os.path.join(self.evaluation_path, roster_fname)
+
+            # persistir roster
+            with open(roster_path, "wb") as f:
+                pickle.dump(roster, f)
+
+            # actualizar configuración: asociar cada skill faltante a este mismo archivo
+            existing_skills_map[roster_path] = missing
+            for sk in missing:
+                used_paths[sk] = roster_path
+
+        # Guardar de nuevo la configuración si hemos creado algo
+        if missing:
+            with open(roster_config_path, "w") as f:
+                yaml.safe_dump(roster_config, f)
+
+        # 6) Preparar la respuesta
+        response["status"] = "ok"
+        response["message"] = "Rosters creados/reutilizados por skill"
+        response["roster_paths"] = used_paths
+        return response
+
+    def real_time_evaluation(
+        self,
+        order_id: int,
+        user_id: str,
+        skill_name: str,
+        correct: int,
+        item_id: str,
+        subject_id: str,
+        roster_path: str,
+    ) -> StudentResult:
+        """
+        Evalua el estado del estudiante en tiempo real para una sesión de aprendizaje
+        en una habilidad específica. Actualiza el estado del estudiante en el roster
+        y guarda los resultados en un CSV.
+
+        Args:
+            order_id (int): Descripción del índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.  
+            user_id (str): ID del estudiante.
+            skill_name (str): Nombre de la habilidad.
+            correct (int): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
+            item_id (str): ID de la pregunta. Se puede repetir indicando que se ha hecho varias veces la misma pregunta.
+            subject_id (str): ID de la asignatura. Se puede repetir indicando que se ha hecho varias veces la misma pregunta.
+            roster_path (str): Ruta al archivo del roster.
+        Raises:
+            FileNotFoundError: Si el archivo del roster no se encuentra.
+        Returns:
+            result (dict[str, str]): Diccionario con el estado del estudiante y la probabilidad de respuesta correcta.
+                - state: Estado del estudiante.
+                - correct_prob: Probabilidad de respuesta correcta.
+                - state_prob: Probabilidad del estado.
+        """
+        logger = logging.getLogger("uvicorn.error")
+        logger.info("Evaluating student data...")
+        # Leemos los roster guardados
+        # Guardar los roster y skills en un yaml con la ruta al roster
+        result = {"state": None, "correct_prob": None, "state_prob": None}
+        
+        try:
+            with open(roster_path, "rb") as file:
+                self.roster = pickle.load(file)
+        except FileNotFoundError:
+            logger.error("Roster file not found")
+            return {"state": None, "correct_prob": None, "state_prob": None}
+        
+        logger.info("Roster loaded successfully")
+        logger.info(f"Evaluating student {user_id} in skill {skill_name}")
+        self.roster.update_state(skill_name, user_id, correct)
+        state = self.roster.get_state(skill_name, user_id)
+        correct_prob = state.current_state["correct_prediction"]
+        state_prob = state.current_state["state_prediction"]
+        current_state = state.state_type.name
+        result["state"] = current_state
+        result["correct_prob"] = correct_prob
+        result["state_prob"] = state_prob
+        logger.info(f"Student {user_id} in skill {skill_name} evaluated. Storing data...")
+        
+        # Guardar los datos en el CSV
+        if not os.path.exists(self.evaluation_csv_path):
+            # Crear el CSV
+            df = {
+                "order_id": order_id,
+                "user_id": user_id,
+                "skill_name": skill_name,
+                "correct": correct,
+                "item_id": item_id,
+                "subject_id": subject_id,
+            }
+            # Guardar el CSV
+            df = pd.DataFrame(df)
+            df.to_csv(self.evaluation_csv_path, index=False)
+            logger.info("Data stored successfully")
+        else:
+            # Cargar el CSV
+            df = pd.read_csv(self.evaluation_csv_path)
+            new_df = {
+                "order_id": order_id,
+                "user_id": user_id,
+                "skill_name": skill_name,
+                "correct": correct,
+                "item_id": item_id,
+                "subject_id": subject_id,
+            }
+            new_df = pd.DataFrame(new_df)
+            # Comprobar que coinciden los nombres de las columnas
+            if not all(col in df.columns for col in new_df.columns):
+                logger.error("Column names do not match. It is not possible to update the dataset")
+            df = pd.concat([df, new_df], ignore_index=True)
+            df.to_csv(self.evaluation_csv_path, index=False)
+            logger.info("Data stored successfully")
+        return result
+    
+    
+    def update_dataset(
+        self, order_id, user_id, skill_name, correct, item_id, subject_id
+    ):
+        # item ID no se usa en este caso, pero puede usarse para ver que
         # preguntas son más o menos difíciles de aprender
         # Puedo introducir la lógica pero habría que entrenar otro modelo para ello
-        """ Actualiza el dataset (de existir) y entrena el modelo.
+        """Actualiza el dataset (de existir) y entrena el modelo.
 
         Args:
             order_id (int): Índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.
@@ -60,17 +253,18 @@ class StudentModel:
                 - students_states: DataFrame con los estados de los estudiantes.
                 - skills_states: DataFrame con los estados de las habilidades.
         """
-     
+
         if os.path.exists(self.csv_path):
             # Cargar el CSV
             df = pd.read_csv(self.csv_path)
             new_df = {
-                    "order_id": order_id,
-                    "user_id": user_id,
-                    "skill_name": skill_name,
-                    "correct": correct,
-                    "item_id": item_id,
-                    "subject_id": subject_id}
+                "order_id": order_id,
+                "user_id": user_id,
+                "skill_name": skill_name,
+                "correct": correct,
+                "item_id": item_id,
+                "subject_id": subject_id,
+            }
             new_df = pd.DataFrame(new_df)
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
@@ -84,31 +278,27 @@ class StudentModel:
                 "skill_name": skill_name,
                 "correct": correct,
                 "item_id": item_id,
-                "subject_id": subject_id}
+                "subject_id": subject_id,
+            }
             # Guardar el CSV
             df = pd.DataFrame(df)
 
-
-        # Entrenamos según el caso        
+        # Entrenamos según el caso
         self.student_model = self.train(df)
-        
+
         # Skill in subject
         skill_subject = {}
         for skill in df["skill_name"].tolist():
             skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
         students_states = self.calculate_students_states(skill_subject)
-        
+
         skills_states = self.calculate_skills_states(skill_subject)
-        
-        
+
         # TODO
         # Lógica para guardar el CSV
         df.to_csv(self.csv_path, index=False)
-        return {
-            "students_states": students_states,
-            "skills_states": skills_states
-        }
-        
+        return {"students_states": students_states, "skills_states": skills_states}
+
     def train(self, df):
         """
         Entrena el modelo con los datos del Dataframe.
@@ -120,22 +310,17 @@ class StudentModel:
         """
         student_model = Model(seed=SEED)
         # Entrenar el modelo
-        student_model.fit(data=df,
-                          multiprior="user_id",
-                          forgets=True
-                          )
-        
+        student_model.fit(data=df, multiprior="user_id", forgets=True)
+
         # TODO
         # Lógica para guardar el modelo
         student_model.save(self.model_path)
         return student_model
-    
+
     from typing import Dict
 
-
     def calculate_students_states(
-            self,
-            skill_subject_map: Dict[str, str]
+        self, skill_subject_map: Dict[str, str]
     ) -> Dict[str, Dict[str, Dict[str, Dict[str, float]]]]:
         """
         Calcula los estados de los estudiantes organizados por asignatura y habilidad.
@@ -193,18 +378,16 @@ class StudentModel:
 
         # filtrar learns / forgets, excluyendo 'Default'
         learn_df = params[
-            (params.param == 'learns') &
-            (params['class'].str.lower() != 'default')
+            (params.param == "learns") & (params["class"].str.lower() != "default")
         ]
         forget_df = params[
-            (params.param == 'forgets') &
-            (params['class'].str.lower() != 'default')
+            (params.param == "forgets") & (params["class"].str.lower() != "default")
         ]
 
         # 4) Construcción de la salida
         out: Dict[str, Dict[str, Dict[str, Dict[str, float]]]] = {}
 
-        alumnos = sorted(set(learn_df['class']).union(forget_df['class']))
+        alumnos = sorted(set(learn_df["class"]).union(forget_df["class"]))
 
         def nested_dict() -> DefaultDict[str, Dict[str, float]]:
             """Devuelve dict anidado subject → {skill: value}."""
@@ -216,26 +399,24 @@ class StudentModel:
             forgets_by_subject: DefaultDict[str, Dict[str, float]] = nested_dict()
 
             #  Learns
-            for row in learn_df[learn_df['class'] == alumno].itertuples():
+            for row in learn_df[learn_df["class"] == alumno].itertuples():
                 subj = skill_subject_map.get(row.skill, "UNKNOWN")
                 learns_by_subject[subj][row.skill] = row.value
 
             #  Forgets
-            for row in forget_df[forget_df['class'] == alumno].itertuples():
+            for row in forget_df[forget_df["class"] == alumno].itertuples():
                 subj = skill_subject_map.get(row.skill, "UNKNOWN")
                 forgets_by_subject[subj][row.skill] = row.value
 
             out[alumno] = {
-                'learns':  dict(learns_by_subject),   # casteo a dict normal
-                'forgets': dict(forgets_by_subject)
+                "learns": dict(learns_by_subject),  # casteo a dict normal
+                "forgets": dict(forgets_by_subject),
             }
 
         return out
 
-
     def calculate_skills_states(
-            self,
-            skill_subject_map: Dict[str, str]
+        self, skill_subject_map: Dict[str, str]
     ) -> Dict[str, Dict[str, Dict[str, float]]]:
         """
         Calcula los estados de las habilidades por asignatura.
@@ -290,15 +471,15 @@ class StudentModel:
         params = self.student_model.params().reset_index()
 
         #  valores "default"
-        params['class'] = params['class'].str.lower()
-        default_df = params[params['class'] == 'default']
+        params["class"] = params["class"].str.lower()
+        default_df = params[params["class"] == "default"]
 
         # 4) Pivot (skill × param → value)
-        wide = default_df.pivot(index='skill', columns='param', values='value')
+        wide = default_df.pivot(index="skill", columns="param", values="value")
         # Asegura presencia de todas las columnas
-        for col in ['prior', 'learns', 'guesses', 'slips', 'forgets']:
+        for col in ["prior", "learns", "guesses", "slips", "forgets"]:
             if col not in wide.columns:
-                wide[col] = float('nan')
+                wide[col] = float("nan")
 
         # construir diccionario anidado subject → skill → métricas
         out: Dict[str, Dict[str, Dict[str, float]]] = defaultdict(dict)
@@ -307,11 +488,11 @@ class StudentModel:
             subj = skill_subject_map.get(skill, "UNKNOWN")
 
             out[subj][skill] = {
-                'prior'   : float(row['prior']),
-                'learns'  : float(row['learns']),
-                'guesses' : float(row['guesses']),
-                'slips'   : float(row['slips']),
-                'forgets' : float(row['forgets'])
+                "prior": float(row["prior"]),
+                "learns": float(row["learns"]),
+                "guesses": float(row["guesses"]),
+                "slips": float(row["slips"]),
+                "forgets": float(row["forgets"]),
             }
 
-        return dict(out)      # convierte defaultdict en dict normal
+        return dict(out)  # convierte defaultdict en dict normal
