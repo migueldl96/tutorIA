@@ -11,7 +11,8 @@ import pickle
 # Si se declara aprende un prior general, y otro específico
 a_priori_probs = {}
 CSV_PATH = "ruta_al_csv.csv"
-EVALUATION_CSV_PATH = "ruta_al_csv_evaluacion.csv"
+EVALUATION_CSV_PATH_NON_TRAINED = "ruta_al_csv_evaluacion.csv"
+EVALUATION_CSV_PATH_TRAINED = "ruta_al_csv_evaluacion_entrenado.csv"
 EVALUATION_PATH = "ruta_roster_evaluacion"
 MODEL_PATH = ""
 SEED = 42
@@ -35,7 +36,8 @@ class StudentModel:
     def __init__(self):
         self.csv_path = CSV_PATH
         self.model_path = MODEL_PATH
-        self.evaluation_csv_path = EVALUATION_CSV_PATH
+        self.evaluation_csv_path_non_trained = EVALUATION_CSV_PATH_NON_TRAINED
+        self.evaluation_csv_path_trained = EVALUATION_CSV_PATH_TRAINED
         self.evaluation_path = EVALUATION_PATH
         self.student_model = None
         self.roster = None
@@ -182,10 +184,16 @@ class StudentModel:
             logger.error("Roster file not found")
             return {"state": None, "correct_prob": None, "state_prob": None}
         
+        
         logger.info("Roster loaded successfully")
         logger.info(f"Evaluating student {user_id} in skill {skill_name}")
+        
+        # Actualizar roaster
         self.roster.update_state(skill_name, user_id, correct)
+        # Evaluar el estado del estudiante
         state = self.roster.get_state(skill_name, user_id)
+        
+        # Extraer los datos del estado
         correct_prob = state.current_state["correct_prediction"]
         state_prob = state.current_state["state_prediction"]
         current_state = state.state_type.name
@@ -207,11 +215,11 @@ class StudentModel:
             }
             # Guardar el CSV
             df = pd.DataFrame(df)
-            df.to_csv(self.evaluation_csv_path, index=False)
+            df.to_csv(self.evaluation_csv_path_non_trained, index=False)
             logger.info("Data stored successfully")
         else:
             # Cargar el CSV
-            df = pd.read_csv(self.evaluation_csv_path)
+            df = pd.read_csv(self.evaluation_csv_path_non_trained)
             new_df = {
                 "order_id": order_id,
                 "user_id": user_id,
@@ -229,6 +237,81 @@ class StudentModel:
             logger.info("Data stored successfully")
         return result
     
+    def update_dataset_evaluation(
+        self,
+        del_roaster: bool = False,
+    ):
+        """Usando los datos de evaluaciones, actualiza el dataset (de existir) y entrena el modelo.
+
+        Args:
+
+
+        Returns:
+            dict: Diccionario con los estados de los estudiantes y habilidades.
+                - students_states: DataFrame con los estados de los estudiantes.
+                - skills_states: DataFrame con los estados de las habilidades.
+        """
+        
+        if os.path.exists(self.csv_path):
+            # Cargar el CSV
+            df = pd.read_csv(self.csv_path)
+            if os.path.exists(self.evaluation_csv_path_non_trained):
+                new_df = pd.read_csv(self.evaluation_csv_path_non_trained)
+            else:
+                logging.error("Evaluation CSV file not found")
+                return {"students_states": None, "skills_states": None}
+            # Comprobar que coinciden los nombres de las columnas
+            if not all(col in df.columns for col in new_df.columns):
+                logging.error("Column names do not match. It is not possible to update the dataset")
+                return {"students_states": None, "skills_states": None}
+            df = pd.concat([df, new_df], ignore_index=True)
+        else:
+            logging.error("Dataset CSV file not found")
+            return {"students_states": None, "skills_states": None}
+
+        # Entrenamos según el caso
+        try:
+            self.student_model = self.train(df)
+        except Exception as e:
+            logging.error(f"Error training the model: {e}")
+            return {"students_states": None, "skills_states": None}
+
+        # Skill in subject
+        skill_subject = {}
+        for skill in df["skill_name"].tolist():
+            skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
+        students_states = self.calculate_students_states(skill_subject)
+
+        skills_states = self.calculate_skills_states(skill_subject)
+
+        # TODO
+        # Lógica para guardar el CSV
+        df.to_csv(self.csv_path, index=False)
+        
+        # Movemos el csv de evaluacion a la ruta de entrenados
+        os.remove(self.evaluation_csv_path_non_trained)
+        if os.path.exists(self.evaluation_csv_path_trained):
+            last_trained_csv = pd.read_csv(self.evaluation_csv_path_trained)
+            last_trained_csv = pd.concat([last_trained_csv, new_df], ignore_index=True)
+            last_trained_csv.to_csv(self.evaluation_csv_path_trained, index=False)
+        else:
+            # Guardar el CSV
+            new_df.to_csv(self.evaluation_csv_path_trained, index=False)
+        
+        if del_roaster:
+            # Eliminar contenido de la carpeta de evaluación
+            for filename in os.listdir(self.evaluation_path):
+                file_path = os.path.join(self.evaluation_path, filename)
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                    elif os.path.isdir(file_path):
+                        os.rmdir(file_path)
+                except Exception as e:
+                    logging.error(f"Error deleting file {file_path}: {e}")
+            
+        return {"students_states": students_states, "skills_states": skills_states}        
+        
     
     def update_dataset(
         self, order_id, user_id, skill_name, correct, item_id, subject_id
@@ -244,9 +327,6 @@ class StudentModel:
             skill_name (str): Nombre de la habilidad.
             correct (int): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
             item_id (str): ID de la pregunta. Se puede repetir indicando que se ha hecho varias veces la misma pregunta.
-
-        Raises:
-            ValueError: Si el modelo no ha sido entrenado o si los nombres de las columnas no coinciden.
 
         Returns:
             dict: Diccionario con los estados de los estudiantes y habilidades.
@@ -268,7 +348,9 @@ class StudentModel:
             new_df = pd.DataFrame(new_df)
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
-                raise ValueError("Column names do not match")
+                logging.error("Column names do not match. It is not possible to update the dataset")
+                return {"students_states": None, "skills_states": None}
+            
             df = pd.concat([df, new_df], ignore_index=True)
         else:
             # Crear el CSV
@@ -284,7 +366,11 @@ class StudentModel:
             df = pd.DataFrame(df)
 
         # Entrenamos según el caso
-        self.student_model = self.train(df)
+        try:
+            self.student_model = self.train(df)
+        except Exception as e:
+            logging.error(f"Error training the model: {e}")
+            return {"students_states": None, "skills_states": None}
 
         # Skill in subject
         skill_subject = {}
