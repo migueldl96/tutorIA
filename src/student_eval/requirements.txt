@@ -1,2 +1,46 @@
+# ──────────────────────────────────────────────────────────────
+# API y validaciones
+# ──────────────────────────────────────────────────────────────
 fastapi[standard]>=0.113.0,<0.114.0
 pydantic>=2.7.0,<3.0.0
+uvicorn[standard]>=0.25.0,<0.30.0
+
+# ──────────────────────────────────────────────────────────────
+# Machine Learning / Cálculo numérico
+# ──────────────────────────────────────────────────────────────
+numpy==1.21.6           # límite máximo para compatibilidad con Python 3.7
+pandas==1.3.5
+scipy==1.7.3
+scikit-learn==1.0.2
+joblib==1.3.2
+threadpoolctl==3.1.0
+
+# ──────────────────────────────────────────────────────────────
+# Motor BKT (C ++ extension) → se compila en la instalación
+# Requiere tool-chain, CMake y scikit-build; GCC/G++ deben
+# estar presentes en el sistema (p. ej. build-essential).
+# ──────────────────────────────────────────────────────────────
+cmake>=3.22       # necesario para compilar pyBKT
+ninja>=1.11       # acelera la compilación (opcional, pero recomendado)
+scikit-build-core>=0.7
+pybind11>=2.11
+# Forzamos compilación para que se enlace con el compilador disponible
+pyBKT==1.4.1 --no-binary=pyBKT
+
+# ──────────────────────────────────────────────────────────────
+# Tests y herramientas de desarrollo
+# ──────────────────────────────────────────────────────────────
+pytest==7.4.4
+pytest-asyncio>=0.23      # si vas a probar endpoints async
+typing-extensions==4.7.1
+python-dateutil==2.9.0.post0
+pyyaml==6.0.1
+
+# ──────────────────────────────────────────────────────────────
+# Red / utilidades
+# ──────────────────────────────────────────────────────────────
+requests==2.31.0
+urllib3==2.0.7
+idna==3.10
+charset-normalizer==3.4.2
+certifi>=2024.04.26
