@@ -1,5 +1,6 @@
 import logging
-from typing import Dict, DefaultDict, List, TypedDict
+from typing import Dict, DefaultDict, List
+from typing_extensions import TypedDict
 from collections import defaultdict
 import pandas as pd
 from pyBKT.models import Model, Roster
@@ -19,15 +20,17 @@ SEED = 42
 
 
 class StudentResult(TypedDict):
-    maestry_prob : float
-    correct_prob : float
-    maestry_state : str
+    maestry_prob: float
+    correct_prob: float
+    maestry_state: str
+
 
 class EvaluationResponse(TypedDict):
     status: str
     message: str
     roster_paths: Dict[str, str]
-    
+
+
 class StudentModel:
     """
     This is a placeholder class for the model that evaluates the student.
@@ -50,7 +53,7 @@ class StudentModel:
         Inicia la evaluación en tiempo real para un estudiante y unas habilidades.
         Crea un nuevo roster para el estudiante y guarda la configuración en un archivo YAML.
         En caso de existir, devuelve su ruta.
-        
+
         Args:
             user_id (str): ID del estudiante.
             skill_names (list[str]): Lista de nombres de habilidades.
@@ -61,11 +64,7 @@ class StudentModel:
                 - roster_paths (Dict[str, str]): Mapeo de cada habilidad a su archivo de roster.
         """
         # Plantilla de respuesta
-        response: EvaluationResponse = {
-        "status": "",
-        "message": "",
-        "roster_paths": {}
-        }
+        response: EvaluationResponse = {"status": "", "message": "", "roster_paths": {}}
 
         logger = logging.getLogger("uvicorn.error")
         logger.info("Starting real time evaluation...")
@@ -87,7 +86,7 @@ class StudentModel:
             roster_config = {}
 
         user_entry = roster_config.setdefault(user_id, {})
-        existing_skills_map = user_entry.setdefault("skills", {})  
+        existing_skills_map = user_entry.setdefault("skills", {})
         # existing_skills_map: { roster_path1: [skillA,skillB], roster_path2: [skillC], ... }
 
         # Reusar modelos existentes skill a skill
@@ -104,16 +103,23 @@ class StudentModel:
         if missing:
             # cargar modelo BKT
             if not os.path.exists(self.model_path):
-                response.update(status="error",
-                                message="Model path does not exist")
+                response.update(status="error", message="Model path does not exist")
                 return response
             with open(self.model_path, "rb") as f:
                 student_model = pickle.load(f)
-
+            
+            model_params = student_model.params().reset_index()
+            a_prioris = model_params.loc[(model_params["param"] == "learns") & (model_params["class"] == user_id)]
             # crear roster para las 'missing'
-            roster = Roster(students=[user_id],  # o tu lista de usuarios
-                            skills=missing,
-                            model=student_model)
+            roster = Roster(
+                students=[user_id],  # o tu lista de usuarios
+                skills=missing,
+                model=student_model,
+            )
+
+            for skill in missing:
+                if skill in a_prioris["skill"].values:
+                    roster.skill_rosters[skill].students[user_id].current_state['state_prediction']   = a_priori_probs[skill]["value"].values[0]
 
             # definir ruta donde guardarlo
             skills_str = "_".join(missing)
@@ -156,7 +162,7 @@ class StudentModel:
         y guarda los resultados en un CSV.
 
         Args:
-            order_id (int): Descripción del índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.  
+            order_id (int): Descripción del índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.
             user_id (str): ID del estudiante.
             skill_name (str): Nombre de la habilidad.
             correct (int): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
@@ -176,23 +182,22 @@ class StudentModel:
         # Leemos los roster guardados
         # Guardar los roster y skills en un yaml con la ruta al roster
         result = {"state": None, "correct_prob": None, "state_prob": None}
-        
+
         try:
             with open(roster_path, "rb") as file:
                 self.roster = pickle.load(file)
         except FileNotFoundError:
             logger.error("Roster file not found")
             return {"state": None, "correct_prob": None, "state_prob": None}
-        
-        
+
         logger.info("Roster loaded successfully")
         logger.info(f"Evaluating student {user_id} in skill {skill_name}")
-        
+
         # Actualizar roaster
         self.roster.update_state(skill_name, user_id, correct)
         # Evaluar el estado del estudiante
         state = self.roster.get_state(skill_name, user_id)
-        
+
         # Extraer los datos del estado
         correct_prob = state.current_state["correct_prediction"]
         state_prob = state.current_state["state_prediction"]
@@ -200,18 +205,20 @@ class StudentModel:
         result["state"] = current_state
         result["correct_prob"] = correct_prob
         result["state_prob"] = state_prob
-        logger.info(f"Student {user_id} in skill {skill_name} evaluated. Storing data...")
-        
+        logger.info(
+            f"Student {user_id} in skill {skill_name} evaluated. Storing data..."
+        )
+
         # Guardar los datos en el CSV
-        if not os.path.exists(self.evaluation_csv_path):
+        if not os.path.exists(self.evaluation_csv_path_non_trained):
             # Crear el CSV
             df = {
-                "order_id": order_id,
-                "user_id": user_id,
-                "skill_name": skill_name,
-                "correct": correct,
-                "item_id": item_id,
-                "subject_id": subject_id,
+                "order_id": [order_id],
+                "user_id": [user_id],
+                "skill_name": [skill_name],
+                "correct": [correct],
+                "item_id": [item_id],
+                "subject_id": [subject_id],
             }
             # Guardar el CSV
             df = pd.DataFrame(df)
@@ -221,22 +228,24 @@ class StudentModel:
             # Cargar el CSV
             df = pd.read_csv(self.evaluation_csv_path_non_trained)
             new_df = {
-                "order_id": order_id,
-                "user_id": user_id,
-                "skill_name": skill_name,
-                "correct": correct,
-                "item_id": item_id,
-                "subject_id": subject_id,
+                "order_id": [order_id],
+                "user_id": [user_id],
+                "skill_name": [skill_name],
+                "correct": [correct],
+                "item_id": [item_id],
+                "subject_id": [subject_id],
             }
             new_df = pd.DataFrame(new_df)
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
-                logger.error("Column names do not match. It is not possible to update the dataset")
+                logger.error(
+                    "Column names do not match. It is not possible to update the dataset"
+                )
             df = pd.concat([df, new_df], ignore_index=True)
             df.to_csv(self.evaluation_csv_path, index=False)
             logger.info("Data stored successfully")
         return result
-    
+
     def update_dataset_evaluation(
         self,
         del_roaster: bool = False,
@@ -251,7 +260,7 @@ class StudentModel:
                 - students_states: DataFrame con los estados de los estudiantes.
                 - skills_states: DataFrame con los estados de las habilidades.
         """
-        
+
         if os.path.exists(self.csv_path):
             # Cargar el CSV
             df = pd.read_csv(self.csv_path)
@@ -262,7 +271,9 @@ class StudentModel:
                 return {"students_states": None, "skills_states": None}
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
-                logging.error("Column names do not match. It is not possible to update the dataset")
+                logging.error(
+                    "Column names do not match. It is not possible to update the dataset"
+                )
                 return {"students_states": None, "skills_states": None}
             df = pd.concat([df, new_df], ignore_index=True)
         else:
@@ -287,7 +298,7 @@ class StudentModel:
         # TODO
         # Lógica para guardar el CSV
         df.to_csv(self.csv_path, index=False)
-        
+
         # Movemos el csv de evaluacion a la ruta de entrenados
         os.remove(self.evaluation_csv_path_non_trained)
         if os.path.exists(self.evaluation_csv_path_trained):
@@ -297,7 +308,7 @@ class StudentModel:
         else:
             # Guardar el CSV
             new_df.to_csv(self.evaluation_csv_path_trained, index=False)
-        
+
         if del_roaster:
             # Eliminar contenido de la carpeta de evaluación
             for filename in os.listdir(self.evaluation_path):
@@ -309,12 +320,17 @@ class StudentModel:
                         os.rmdir(file_path)
                 except Exception as e:
                     logging.error(f"Error deleting file {file_path}: {e}")
-            
-        return {"students_states": students_states, "skills_states": skills_states}        
-        
-    
+
+        return {"students_states": students_states, "skills_states": skills_states}
+
     def update_dataset(
-        self, order_id, user_id, skill_name, correct, item_id, subject_id
+        self,
+        order_id: List[int],
+        user_id: List[str],
+        skill_name: List[str],
+        correct: List[int],
+        item_id: List[str],
+        subject_id: List[str],
     ):
         # item ID no se usa en este caso, pero puede usarse para ver que
         # preguntas son más o menos difíciles de aprender
@@ -322,17 +338,18 @@ class StudentModel:
         """Actualiza el dataset (de existir) y entrena el modelo.
 
         Args:
-            order_id (int): Índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.
-            user_id (str): ID del estudiante.
-            skill_name (str): Nombre de la habilidad.
-            correct (int): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
-            item_id (str): ID de la pregunta. Se puede repetir indicando que se ha hecho varias veces la misma pregunta.
+            order_id (list[int]): Índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.
+            user_id (list[str]): ID del estudiante.
+            skill_name (list[str]): Nombre de la habilidad.
+            correct (list[int]): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
+            item_id (list[str]): ID de la pregunta. Se puede repetir indicando que se ha hecho varias veces la misma pregunta.
 
         Returns:
             dict: Diccionario con los estados de los estudiantes y habilidades.
                 - students_states: DataFrame con los estados de los estudiantes.
                 - skills_states: DataFrame con los estados de las habilidades.
         """
+        # Comprobar que todos los argumentos son listas
 
         if os.path.exists(self.csv_path):
             # Cargar el CSV
@@ -348,9 +365,11 @@ class StudentModel:
             new_df = pd.DataFrame(new_df)
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
-                logging.error("Column names do not match. It is not possible to update the dataset")
+                logging.error(
+                    "Column names do not match. It is not possible to update the dataset"
+                )
                 return {"students_states": None, "skills_states": None}
-            
+
             df = pd.concat([df, new_df], ignore_index=True)
         else:
             # Crear el CSV
