@@ -1,0 +1,428 @@
+tema1_1:
+  document_name: tema1_1.pdf
+  skills:
+    - medidas_e_incertidumbres
+  subject: Introduccion, medidas y estimaciones
+  difficulty: Facil
+  description: Capitulo 1 secciones 1 a 1.4
+
+tema1_2:
+  document_name: tema1_2.pdf
+  skills: unidades_y_sistema_estandar
+  subject: Introduccion, medidas y estimaciones
+  difficulty: Facil
+  description: Capitulo 1 secciones 1.5
+
+tema1_3:
+  document_name: tema1_3.pdf
+  skills:
+    - conversion_de_unidades
+    - unidades_y_sistema_estandar
+  subject: Introduccion, medidas y estimaciones
+  difficulty: Medio
+  description: Capitulo 1 secciones 1.6
+
+tema1_4:
+  document_name: tema1_4.pdf
+  skills:
+    - unidades_y_sistema_estandar
+    - ordenes_de_magnitud
+    - dimensiones_y_analisis_dimensional
+  subject: Introduccion, medidas y estimaciones
+  difficulty: Medio
+  description: Capitulo 1 secciones 1.7 a 1.8
+
+tema1_5:
+  document_name: tema1_5.pdf
+  skills:
+    - conversion_de_unidades
+    - unidades_y_sistema_estandar
+    - ordenes_de_magnitud
+    - dimensiones_y_analisis_dimensional
+    - medidas_e_incertidumbres
+  subject: Introduccion, medidas y estimaciones
+  difficulty: Medio
+  description: Ejercicios capitulo 1
+
+tema2_1:
+  document_name: tema2_1.pdf
+  skills:
+    - parametros_cinematicos
+  subject: Cinematica en una dimension
+  difficulty: Facil
+  description: Capitulo 2 secciones 2.1 a 2.4
+
+tema2_2:
+  document_name: tema2_2.pdf
+  skills:
+    - parametros_cinematicos
+    - movimiento_aceleracion_constante
+  subject: Cinematica en una dimension
+  difficulty: Facil
+  description: Capitulo 2 secciones 2.5
+
+tema2_3:
+  document_name: tema2_3.pdf
+  skills:
+    - parametros_cinematicos
+    - movimiento_aceleracion_constante
+    - resolucion_problemas_cinematica
+  subject: Cinematica en una dimension
+  difficulty: Facil
+  description: Capitulo 2 secciones 2.6
+
+tema2_4:
+  document_name: tema2_4.pdf
+  skills:
+    - movimiento_aceleracion_constante
+    - caida_libre
+  subject: Cinematica en una dimension
+  difficulty: Medio
+  description: Capitulo 2 secciones 2.7
+
+tema2_5:
+  document_name: tema2_5.pdf
+  skills:
+    - movimiento_aceleracion_constante
+    - caida_libre
+    - analisis_grafico_movimiento_unidimensional
+  subject: Cinematica en una dimension
+  difficulty: Medio
+  description: Capitulo 2 secciones 2.8
+
+tema2_6:
+  document_name: tema2_6.pdf
+  skills:
+    - parametros_cinematicos
+    - movimiento_aceleracion_constante
+    - caida_libre
+    - analisis_grafico_movimiento_unidimensional
+  subject: Cinematica en una dimension
+  difficulty: Medio
+  description: Ejercicios capitulo 2
+
+tema3_1:
+  document_name: tema3_1.pdf
+  skills:
+    - vectores
+    - suma_y_resta_de_vectores
+  subject: Cinematica en dos dimensiones
+  difficulty: Facil
+  description: Capitulo 3 secciones 3.1 a 3.4
+
+tema3_2:
+  document_name: tema3_2.pdf
+  skills:
+    - vectores
+    - suma_y_resta_de_vectores
+    - movimiento_parabolico
+  subject: Cinematica en dos dimensiones
+  difficulty: Facil
+  description: Capitulo 3 secciones 3.5 a 3.7
+
+tema3_3:
+  document_name: tema3_3.pdf
+  skills:
+    - suma_y_resta_de_vectores
+    - velocidad_relativa
+  subject: Cinematica en dos dimensiones
+  difficulty: Medio
+  description: Capitulo 3 secciones 3.8
+
+tema3_4:
+  document_name: tema3_4.pdf
+  skills:
+    - vectores
+    - suma_y_resta_de_vectores
+    - movimiento_parabolico
+    - velocidad_relativa
+  subject: Cinematica en dos dimensiones
+  difficulty: Medio
+  description: Ejercicios capitulo 3
+
+tema4_1:
+  document_name: tema4_1.pdf
+  skills:
+    - fuerzas
+    - leyes_de_newton
+  subject: Dinamica y leyes de Newton
+  difficulty: Facil
+  description: Capitulo 4 secciones 4.1 a 4.6
+
+tema4_2:
+  document_name: tema4_2.pdf
+  skills:
+    - fuerzas
+    - leyes_de_newton
+    - friccion
+  subject: Dinamica y leyes de Newton
+  difficulty: Medio
+  description: Capitulo 4 secciones 4.7 a 4.8
+
+tema4_3:
+  document_name: tema4_3.pdf
+  skills:
+    - fuerzas
+    - leyes_de_newton
+    - friccion
+  subject: Dinamica y leyes de Newton
+  difficulty: Medio
+  description: Ejercicios capitulo 4
+
+tema6_1:
+  document_name: tema6_1.pdf
+  skills:
+    - trabajo_y_energia
+    - energia_cinetica
+    - energia_potencial
+  subject: Trabajo y energia
+  difficulty: Facil
+  description: Capitulo 6 secciones 6.1 a 6.4
+
+tema6_2:
+  document_name: tema6_2.pdf
+  skills:
+    - trabajo_y_energia
+    - energia_cinetica
+    - energia_potencial
+    - conservacion_de_la_energia
+    - fuerzas_conservativas_no_conservativas
+  subject: Trabajo y energia
+  difficulty: Medio
+  description: Capitulo 6 secciones 6.5 a 6.9
+
+tema6_3:
+  document_name: tema6_3.pdf
+  skills:
+    - trabajo_y_energia
+    - potencia
+  subject: Trabajo y energia
+  difficulty: Medio
+  description: Capitulo 6 secciones 6.10
+
+tema6_4:
+  document_name: tema6_4.pdf
+  skills:
+    - trabajo_y_energia
+    - energia_cinetica
+    - energia_potencial
+    - conservacion_de_la_energia
+    - fuerzas_conservativas_no_conservativas
+  subject: Trabajo y energia
+  difficulty: Medio
+  description: Ejercicios capitulo 6
+
+tema18_1:
+  document_name: tema18_1.pdf
+  skills:
+    - corriente_electrica
+  subject: Corrientes electricas
+  difficulty: Facil
+  description: Capitulo 18 secciones 18.1 a 18.2
+
+tema18_2:
+  document_name: tema18_2.pdf
+  skills:
+    - corriente_electrica
+    - ley_de_ohm
+    - resistividad
+  subject: Corrientes electricas
+  difficulty: Medio
+  description: Capitulo 18 secciones 18.3 a 18.4
+
+tema18_3:
+  document_name: tema18_3.pdf
+  skills:
+    - corriente_electrica
+    - potencia_electrica
+  subject: Corrientes electricas
+  difficulty: Medio
+  description: Capitulo 18 secciones 18.5 a 18.6
+
+tema18_4:
+  document_name: tema18_4.pdf
+  skills:
+    - corriente_electrica
+    - corriente_alterna
+  subject: Corrientes electricas
+  difficulty: Facil
+  description: Capitulo 18 secciones 18.7
+
+tema18_5:
+  document_name: tema18_5.pdf
+  skills:
+    - electricidad_microscopica
+  subject: Corrientes electricas
+  difficulty: Medio
+  description: Capitulo 18 secciones 18.8
+
+tema18_6:
+  document_name: tema18_6.pdf
+  skills:
+    - superconductividad
+  subject: Corrientes electricas
+  difficulty: Medio
+  description: Capitulo 18 secciones 18.9
+
+tema18_7:
+  document_name: tema18_7.pdf
+  skills:
+    - electricidad_neuronas
+  subject: Corrientes electricas
+  difficulty: Facil
+  description: Capitulo 18 secciones 18.10
+
+tema18_8:
+  document_name: tema18_8.pdf
+  skills:
+    - circuitos_electricos
+    - ley_de_ohm
+    - corriente_alterna
+    - potencia_electrica
+    - electricidad_microscopica
+    - superconductividad
+    - electricidad_neuronas
+  subject: Corrientes electricas
+  difficulty: Medio
+  description: Ejercicios capitulo 18
+
+
+tema19_1:
+  document_name: tema19_1.pdf
+  skills:
+    - fuerza_electromotriz_y_diferencia_de_potencial
+  subject: Corriente continua
+  difficulty: Facil
+  description: Capitulo 19 secciones 19.1
+
+tema19_2:
+  document_name: tema19_2.pdf
+  skills:
+    - resistencia_serie_paralelo
+  subject: Corriente continua
+  difficulty: Facil
+  description: Capitulo 19 secciones 19.2
+
+tema19_3:
+  document_name: tema19_3.pdf
+  skills:
+    - resistencia_serie_paralelo
+    - leyes_de_kirchhoff
+  subject: Corriente continua
+  difficulty: Medio
+  description: Capitulo 19 secciones 19.3
+
+tema19_4:
+  document_name: tema19_4.pdf
+  skills:
+    - fuerza_electromotriz_y_diferencia_de_potencial
+    - resistencia_serie_paralelo
+  subject: Corriente continua
+  difficulty: Medio
+  description: Capitulo 19 secciones 19.4
+
+tema19_5:
+  document_name: tema19_5.pdf
+  skills:
+    - condensadores
+    - circuitos_rc
+  subject: Corriente continua
+  difficulty: Medio
+  description: Capitulo 19 secciones 19.5 y 19.6
+
+tema19_6:
+  document_name: tema19_6.pdf
+  skills:
+    - peligros_electricos
+  subject: Corriente continua
+  difficulty: Facil
+  description: Capitulo 19 secciones 19.7
+
+tema19_7:
+  document_name: tema19_7.pdf
+  skills:
+    - aparatos_de_medicion
+  subject: Corriente continua
+  difficulty: Facil
+  description: Capitulo 19 secciones 19.8
+
+tema19_8:
+  document_name: tema19_8.pdf
+  skills:
+    - circuitos_electricos
+    - fuerza_electromotriz_y_diferencia_de_potencial
+    - resistencia_serie_paralelo
+    - leyes_de_kirchhoff
+    - condensadores
+    - circuitos_rc
+    - peligros_electricos
+    - aparatos_de_medicion
+  subject: Corriente continua
+  difficulty: Medio
+  description: Ejercicios capitulo 19
+
+tema23_1:
+  document_name: tema23_1.pdf
+  skills:
+    - reflexion_espejos_planos
+  subject: Optica geometrica
+  difficulty: Facil
+  description: Capitulo 23 secciones 23.1 a 23.2
+
+tema23_2:
+  document_name: tema23_2.pdf
+  skills:
+    - imagenes_espejos_curvos
+  subject: Optica geometrica
+  difficulty: Medio
+  description: Capitulo 23 secciones 23.3
+
+tema23_3:
+  document_name: tema23_3.pdf
+  skills:
+    - refraccion
+    - leyes_de_snell
+  subject: Optica geometrica
+  difficulty: Facil
+  description: Capitulo 23 secciones 23.4 a 23.5
+
+tema23_4:
+  document_name: tema23_4.pdf
+  skills:
+    - leyes_de_snell
+    - reflexion_total_interna
+  subject: Optica geometrica
+  difficulty: Medio
+  description: Capitulo 23 secciones 23.6
+
+tema23_5:
+  document_name: tema23_5.pdf
+  skills:
+    - lentes_delgadas
+    - leyes_de_snell
+  subject: Optica geometrica
+  difficulty: Medio
+  description: Capitulo 23 secciones 23.7 a 23.8
+
+tema23_6:
+  document_name: tema23_6.pdf
+  skills:
+    - lentes_delgadas
+    - combinacion_de_llentes
+  subject: Optica geometrica
+  difficulty: Medio
+  description: Capitulo 23 secciones 23.9
+
+tema23_7:
+  document_name: tema23_7.pdf
+  skills:
+    - reflexion_espejos_planos
+    - imagenes_espejos_curvos
+    - refraccion
+    - leyes_de_snell
+    - reflexion_total_interna
+    - lentes_delgadas
+    - combinacion_de_llentes
+  subject: Optica geometrica
+  difficulty: Medio
+  description: Ejercicios capitulo 23
