@@ -1,0 +1,5 @@
+Bob:
+  skills:
+    tmp/rte/roster_Bob_equations_lens.pkl:
+    - equations
+    - lens

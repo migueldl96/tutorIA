@@ -23,6 +23,17 @@ class StudentResult(TypedDict):
     maestry_prob: float
     correct_prob: float
     maestry_state: str
+    
+class StudentStates(TypedDict):
+    learns: Dict[str, Dict[str, float]]
+    forgets: Dict[str, Dict[str, float]]
+
+class SkillStates(TypedDict):
+    prior: float
+    learns: float
+    guesses: float
+    slips: float
+    forgets: float
 
 
 class EvaluationResponse(TypedDict):
@@ -116,10 +127,9 @@ class StudentModel:
                 skills=missing,
                 model=student_model,
             )
-
             for skill in missing:
                 if skill in a_prioris["skill"].values:
-                    roster.skill_rosters[skill].students[user_id].current_state['state_prediction']   = a_priori_probs[skill]["value"].values[0]
+                    roster.skill_rosters[skill].students[user_id].current_state['state_prediction']   = a_prioris.loc[a_prioris["skill"] == skill, "value"].values[0]
 
             # definir ruta donde guardarlo
             skills_str = "_".join(missing)
@@ -162,7 +172,7 @@ class StudentModel:
         y guarda los resultados en un CSV.
 
         Args:
-            order_id (int): Descripción del índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.
+            order_id (int): Descripción del índice de orden único de cada pregunta (item_id) respondida por un estudiante. No se puede repetir entre datasets. Ej: numerical_item_id + timestamp.
             user_id (str): ID del estudiante.
             skill_name (str): Nombre de la habilidad.
             correct (int): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
@@ -208,6 +218,10 @@ class StudentModel:
         logger.info(
             f"Student {user_id} in skill {skill_name} evaluated. Storing data..."
         )
+        # Guardamos el roster
+        with open(roster_path, "wb") as file:
+            pickle.dump(self.roster, file)
+        logger.info("Roster updated successfully")
 
         # Guardar los datos en el CSV
         if not os.path.exists(self.evaluation_csv_path_non_trained):
@@ -242,7 +256,7 @@ class StudentModel:
                     "Column names do not match. It is not possible to update the dataset"
                 )
             df = pd.concat([df, new_df], ignore_index=True)
-            df.to_csv(self.evaluation_csv_path, index=False)
+            df.to_csv(self.evaluation_csv_path_non_trained, index=False)
             logger.info("Data stored successfully")
         return result
 
@@ -338,7 +352,7 @@ class StudentModel:
         """Actualiza el dataset (de existir) y entrena el modelo.
 
         Args:
-            order_id (list[int]): Índice de orden único de cada pregunta (item_id) y estudiante (user_id). No se puede repetir entre datasets. Ej: numerical_user_id + numerical_item_id + timestamp.
+            order_id (list[str]): Descripción del índice de orden único de cada pregunta (item_id) respondida por un estudiante. No se puede repetir entre datasets. Ej: numerical_item_id + timestamp.
             user_id (list[str]): ID del estudiante.
             skill_name (list[str]): Nombre de la habilidad.
             correct (list[int]): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
@@ -362,7 +376,11 @@ class StudentModel:
                 "item_id": item_id,
                 "subject_id": subject_id,
             }
-            new_df = pd.DataFrame(new_df)
+            try:
+                new_df = pd.DataFrame(new_df)
+            except Exception as e:
+                logging.error(f"Error creating DataFrame: {e}")
+                return {"students_states": None, "skills_states": None}
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
                 logging.error(
@@ -382,7 +400,11 @@ class StudentModel:
                 "subject_id": subject_id,
             }
             # Guardar el CSV
-            df = pd.DataFrame(df)
+            try:
+                df = pd.DataFrame(df)
+            except Exception as e:
+                logging.error(f"Error creating DataFrame: {e}")
+                return {"students_states": None, "skills_states": None}
 
         # Entrenamos según el caso
         try:
@@ -404,7 +426,7 @@ class StudentModel:
         df.to_csv(self.csv_path, index=False)
         return {"students_states": students_states, "skills_states": skills_states}
 
-    def train(self, df):
+    def train(self, df : pd.DataFrame) -> Model:
         """
         Entrena el modelo con los datos del Dataframe.
 
@@ -419,110 +441,93 @@ class StudentModel:
 
         # TODO
         # Lógica para guardar el modelo
+        if not self.model_path.endswith(".pkl"):
+            self.model_path = os.path.join(self.model_path, "student_model.pkl")
         student_model.save(self.model_path)
         return student_model
 
-    from typing import Dict
 
     def calculate_students_states(
-        self, skill_subject_map: Dict[str, str]
-    ) -> Dict[str, Dict[str, Dict[str, Dict[str, float]]]]:
+        self,
+        skill_subject_map: Dict[str, str]
+    ) -> Dict[str, StudentStates]:
         """
-        Calcula los estados de los estudiantes organizados por asignatura y habilidad.
-
-        Esta función construye un diccionario anidado que contiene, para cada estudiante,
-        las tasas de aprendizaje (`learns`) y de olvido (`forgets`) por habilidad,
-        agrupadas a su vez por asignatura (`subject_id`).
-
-        Estructura de salida:
-        ---------------------
-        ::
-
-            {
-                'student_id': {
-                    'learns': {
-                        'subject_id': {
-                            'skill_id': value,
-                            ...
-                        },
-                        ...
-                    },
-                    'forgets': {
-                        'subject_id': {
-                            'skill_id': value,
-                            ...
-                        },
-                        ...
-                    }
-                },
-                ...
-            }
+        Para cada estudiante, devuelve dos mapas ('learns' y 'forgets'),
+        cada uno agrupado por subject_id con sus skills y su valor.
 
         Parameters
         ----------
         skill_subject_map : Dict[str, str]
-            Diccionario que mapea el nombre de cada habilidad (`skill_name`) con su
-            correspondiente ID de asignatura (`subject_id`).
-
-        Raises
-        ------
-        ValueError
-            Si el modelo no ha sido entrenado (`self.student_model is None`).
+            Mapea cada skill_name a su subject_id.
 
         Returns
         -------
-        Dict[str, Dict[str, Dict[str, Dict[str, float]]]]
-            Diccionario con los estados de los estudiantes, organizados por estudiante,
-            tipo de parámetro (`learns` o `forgets`), asignatura y habilidad.
+        Dict[str, StudentStates]
+            Ejemplo de salida:
+            {
+                'alice': {
+                    'learns': {
+                        'MATH': {'fractions': 0.23, 'equations': 0.91},
+                        'PHYS': {'optics': 0.42}
+                    },
+                    'forgets': {
+                        'MATH': {'fractions': 0.00, 'equations': 0.12},
+                        'PHYS': {'optics': 0.05}
+                    }
+                },
+                'bob': { ... }
+            }
         """
         if self.student_model is None:
             raise ValueError("Not trained model")
 
-        # parámetros planos
+        # 1) extrae un DataFrame plano de parámetros
         params = self.student_model.params().reset_index()
 
-        # filtrar learns / forgets, excluyendo 'Default'
+        # 2) filtra solo learns y forgets, excluyendo el “Default”
         learn_df = params[
-            (params.param == "learns") & (params["class"].str.lower() != "default")
+            (params.param == "learns") &
+            (params["class"].str.lower() != "default")
         ]
         forget_df = params[
-            (params.param == "forgets") & (params["class"].str.lower() != "default")
+            (params.param == "forgets") &
+            (params["class"].str.lower() != "default")
         ]
 
-        # 4) Construcción de la salida
-        out: Dict[str, Dict[str, Dict[str, Dict[str, float]]]] = {}
+        # 3) prepara la salida tipada
+        out: Dict[str, StudentStates] = {}
 
-        alumnos = sorted(set(learn_df["class"]).union(forget_df["class"]))
-
-        def nested_dict() -> DefaultDict[str, Dict[str, float]]:
-            """Devuelve dict anidado subject → {skill: value}."""
+        # auxiliar para crear dict sujetos→{skill:valor}
+        def nested_subject_dict() -> DefaultDict[str, Dict[str, float]]:
             return defaultdict(dict)
 
-        for alumno in alumnos:
-            # Diccionarios vacíos con un nivel para subject_id
-            learns_by_subject: DefaultDict[str, Dict[str, float]] = nested_dict()
-            forgets_by_subject: DefaultDict[str, Dict[str, float]] = nested_dict()
+        alumnos = sorted(set(learn_df["class"]) | set(forget_df["class"]))
 
-            #  Learns
+        for alumno in alumnos:
+            learns_by_subject = nested_subject_dict()
+            forgets_by_subject = nested_subject_dict()
+
+            # rellena learns
             for row in learn_df[learn_df["class"] == alumno].itertuples():
                 subj = skill_subject_map.get(row.skill, "UNKNOWN")
                 learns_by_subject[subj][row.skill] = row.value
 
-            #  Forgets
+            # rellena forgets
             for row in forget_df[forget_df["class"] == alumno].itertuples():
                 subj = skill_subject_map.get(row.skill, "UNKNOWN")
                 forgets_by_subject[subj][row.skill] = row.value
 
             out[alumno] = {
-                "learns": dict(learns_by_subject),  # casteo a dict normal
-                "forgets": dict(forgets_by_subject),
+                "learns": dict(learns_by_subject),
+                "forgets": dict(forgets_by_subject)
             }
 
         return out
 
+
     def calculate_skills_states(
         self, skill_subject_map: Dict[str, str]
-    ) -> Dict[str, Dict[str, Dict[str, float]]]:
+    ) -> Dict[str, Dict[str, SkillStates]]:
         """
         Calcula los estados de las habilidades por asignatura.
 
@@ -587,7 +592,7 @@ class StudentModel:
                 wide[col] = float("nan")
 
         # construir diccionario anidado subject → skill → métricas
-        out: Dict[str, Dict[str, Dict[str, float]]] = defaultdict(dict)
+        out: Dict[str, Dict[str, SkillStates]] = defaultdict(dict)
 
         for skill, row in wide.iterrows():
             subj = skill_subject_map.get(skill, "UNKNOWN")
