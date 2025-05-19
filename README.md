@@ -36,5 +36,23 @@ Este es un listado inicial y provisional de tecnologías a utilizar:
 
 Este repositorio está en **fase de diseño y prototipado temprano**. Toda la funcionalidad, diseño y arquitectura están **sujetos a cambios**. La documentación y el código reflejan únicamente un trabajo exploratorio inicial.
 
+## Usar repositorio
+### Requisitos:
+- Anaconda (o miniconda)
+- Compiladores de C (gcc y g++)
+### Configuración de entorno
+Importamos el entorno desde el archivo 'environment.yml' con el siguiente comando:
+```bash
+conda env create -f environment.yml
+```
+### Activar entorno
+```bash
+conda activate tutorIA
+```
+### Abrir Visual Studio Code
+```bash
+code .
+```
+### Probar archivo Guía_rápida.ipynb
 ---
 
