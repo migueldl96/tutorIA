@@ -8,7 +8,8 @@ tema1_1:
 
 tema1_2:
   document_name: tema1_2.pdf
-  skills: unidades_y_sistema_estandar
+  skills: 
+    - unidades_y_sistema_estandar
   subject: Introduccion, medidas y estimaciones
   difficulty: Facil
   description: Capitulo 1 secciones 1.5
