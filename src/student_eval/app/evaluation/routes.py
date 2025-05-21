@@ -38,7 +38,7 @@ class EvaluationSetup(BaseModel):
 async def update_dataset(data: TrainingData):
     try:
         results = model.update_dataset(
-            data=data.data
+            data=data
         )           
         return results
     except Exception as e:
