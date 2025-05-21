@@ -34,7 +34,8 @@ class UpdateEvalData(BaseModel):
 class EvaluationSetup(BaseModel):
     user_id: str
     skill_names: List[str]
-
+    
+@router.post("/update_dataset")
 async def update_dataset(request: Request):
     try:
         # Obtener los datos JSON directamente
