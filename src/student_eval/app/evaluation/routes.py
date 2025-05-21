@@ -35,17 +35,6 @@ class EvaluationSetup(BaseModel):
     user_id: str
     skill_names: List[str]
 
-@router.post("/update_dataset")
-async def update_dataset(data: TrainingData):
-    try:
-        results = model.update_dataset(
-            data=data
-        )           
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/update_dataset_tabular")
 async def update_dataset(request: Request):
     try:
         # Obtener los datos JSON directamente
@@ -65,6 +54,21 @@ async def update_dataset(request: Request):
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+@router.post("/update_dataset_tabular")
+async def update_dataset(data: TrainingDataTabular):
+    try:
+        results = model.update_dataset_tabular(
+            order_id=data.order_id,
+            user_id=data.user_id,
+            skill_name=data.skill_name,
+            correct=data.correct,
+            item_id=data.item_id,
+            subject_id=data.subject_id
+        )           
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/start_real_time_evaluation")
 async def start_real_time_evaluation(data: EvaluationSetup):
