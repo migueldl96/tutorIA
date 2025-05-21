@@ -1,5 +1,8 @@
 from fastapi import FastAPI
-from evaluation.routes import router as evaluation_router
+
+import sys
+# Añadir la ruta actual al sys.path
+from .evaluation.routes import router as evaluation_router
 
 # Main app
 app = FastAPI() 

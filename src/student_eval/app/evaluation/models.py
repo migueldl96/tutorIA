@@ -11,11 +11,17 @@ import pickle
 # Si no se declara, el prior será 0 si estamos en multiprior
 # Si se declara aprende un prior general, y otro específico
 a_priori_probs = {}
-CSV_PATH = "ruta_al_csv.csv"
-EVALUATION_CSV_PATH_NON_TRAINED = "ruta_al_csv_evaluacion.csv"
-EVALUATION_CSV_PATH_TRAINED = "ruta_al_csv_evaluacion_entrenado.csv"
-EVALUATION_PATH = "ruta_roster_evaluacion"
-MODEL_PATH = ""
+# Abrir rutas.yml
+with open("rutas.yml", "r") as file:
+    paths = yaml.safe_load(file)
+if not os.path.exists("tmp"):
+    os.makedirs("tmp")
+    
+CSV_PATH = paths["CSV_PATH"]
+EVALUATION_CSV_PATH_NON_TRAINED = paths["EVALUATION_CSV_PATH_NON_TRAINED"]
+EVALUATION_CSV_PATH_TRAINED = paths["EVALUATION_CSV_PATH_TRAINED"]
+EVALUATION_PATH = paths["EVALUATION_PATH"]
+MODEL_PATH = paths["MODEL_PATH"]
 SEED = 42
 
 

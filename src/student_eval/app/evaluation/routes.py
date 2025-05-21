@@ -15,6 +15,18 @@ class TrainingData(BaseModel):
     item_id: List[str]
     subject_id: List[str]
 
+class RealEvalData(BaseModel):
+    order_id: int
+    user_id: str
+    skill_name: str
+    correct: int
+    item_id: str
+    subject_id: str
+    roaster_path: str
+
+class UpdateEvalData(BaseModel):
+    del_roaster: bool
+
 class EvaluationSetup(BaseModel):
     user_id: str
     skill_names: List[str]
@@ -40,6 +52,32 @@ async def start_real_time_evaluation(data: EvaluationSetup):
         results = model.start_real_time_evaluation(
             user_id=data.user_id,
             skill_names=data.skill_names
+        )
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/real_time_evaluation")
+async def real_time_evaluation(data: RealEvalData):
+    try:
+        results = model.real_time_evaluation(
+            order_id=data.order_id,
+            user_id=data.user_id,
+            skill_name=data.skill_name,
+            correct=data.correct,
+            item_id=data.item_id,
+            subject_id=data.subject_id,
+            roster_path=data.roaster_path
+        )
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/update_dataset_evaluation")
+async def update_dataset_evaluation(data: UpdateEvalData):
+    try:
+        results = model.update_dataset_evaluation(
+            del_roaster=data.del_roaster
         )
         return results
     except Exception as e:
