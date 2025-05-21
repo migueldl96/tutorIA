@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any
 from .models import StudentModel, DataEntry
 from pydantic import BaseModel
+from fastapi import Request  # Importar Request
 
 router = APIRouter(prefix="/evaluation")
 model = StudentModel()
@@ -45,19 +46,25 @@ async def update_dataset(data: TrainingData):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/update_dataset_tabular")
-async def update_dataset(data: TrainingDataTabular):
+async def update_dataset(request: Request):
     try:
-        results = model.update_dataset_tabular(
-            order_id=data.order_id,
-            user_id=data.user_id,
-            skill_name=data.skill_name,
-            correct=data.correct,
-            item_id=data.item_id,
-            subject_id=data.subject_id
-        )           
+        # Obtener los datos JSON directamente
+        data = await request.json()
+        
+        # Imprimir los datos recibidos para depuración
+        print("Datos recibidos:", data)
+        
+        # Verificar si es una lista o un objeto
+        if isinstance(data, list):
+            results = model.update_dataset(data=data)
+        elif isinstance(data, dict) and "data" in data:
+            results = model.update_dataset(data=data["data"])
+        else:
+            raise HTTPException(status_code=400, detail="Se esperaba una lista de objetos o un objeto con campo 'data'")
+            
         return results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @router.post("/start_real_time_evaluation")
 async def start_real_time_evaluation(data: EvaluationSetup):
