@@ -8,38 +8,22 @@ class EvaluationSQLServerService(BaseService):
     """
 
     def create(self, data: InitialEvaluationDTO):
-        """
-        Create a new evaluation record in the SQL Server database.
-        :param data: The evaluation data to create.
-        :return: The created evaluation record.
-        """
-        # Implementation for creating an evaluation record in SQL Server
-        pass
-
+        """Create a new evaluation result"""
+        # Implementar la lógica para guardar en base de datos
+        # Por ahora, solo devolvemos los datos para fines de prueba
+        return {"status": "created", "data": data.dict()}
+    
     def read(self, resource_id: str):
-        """
-        Read an evaluation record by its ID from the SQL Server database.
-        :param resource_id: The ID of the evaluation record to read.
-        :return: The evaluation record data.
-        """
-        # Implementation for reading an evaluation record from SQL Server
-        pass
-
+        """Read an evaluation result by ID"""
+        # Implementar la lógica para leer de base de datos
+        return {"status": "read", "id": resource_id}
+    
     def update(self, resource_id: str, data: InitialEvaluationDTO):
-        """
-        Update an evaluation record by its ID in the SQL Server database.
-        :param resource_id: The ID of the evaluation record to update.
-        :param data: The new evaluation data.
-        :return: The updated evaluation record.
-        """
-        # Implementation for updating an evaluation record in SQL Server
-        pass
-
+        """Update an evaluation result"""
+        # Implementar la lógica para actualizar en base de datos
+        return {"status": "updated", "id": resource_id, "data": data.dict()}
+    
     def delete(self, resource_id: str):
-        """
-        Delete an evaluation record by its ID from the SQL Server database.
-        :param resource_id: The ID of the evaluation record to delete.
-        :return: None
-        """
-        # Implementation for deleting an evaluation record from SQL Server
-        pass
+        """Delete an evaluation result"""
+        # Implementar la lógica para eliminar de base de datos
+        return {"status": "deleted", "id": resource_id}
