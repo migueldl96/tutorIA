@@ -40,6 +40,11 @@ Este repositorio está en **fase de diseño y prototipado temprano**. Toda la fu
 ### Requisitos:
 - Anaconda (o miniconda)
 - Compiladores de C (gcc y g++)
+### Instalamos gcc y g++
+```bash
+sudo apt-get install build-essential
+```
+### Instalar miniconda
 ### Configuración de entorno
 Importamos el entorno desde el archivo 'environment.yml' con el siguiente comando:
 ```bash
@@ -49,10 +54,8 @@ conda env create -f environment.yml
 ```bash
 conda activate tutorIA
 ```
-### Abrir Visual Studio Code
-```bash
-code .
-```
+### Lanzar servidor
+uvicorn src.student_eval.app.main:app --reload
 ### Probar archivo Guía_rápida.ipynb
 ---
 
