@@ -14,13 +14,26 @@ from repositories.base_repository import BaseRepository
 # Si no se declara, el prior será 0 si estamos en multiprior
 # Si se declara aprende un prior general, y otro específico
 a_priori_probs = {}
-CSV_PATH = "ruta_al_csv.csv"
-EVALUATION_CSV_PATH_NON_TRAINED = "ruta_al_csv_evaluacion.csv"
-EVALUATION_CSV_PATH_TRAINED = "ruta_al_csv_evaluacion_entrenado.csv"
-EVALUATION_PATH = "ruta_roster_evaluacion"
-MODEL_PATH = ""
+# Abrir rutas.yml
+with open("rutas.yml", "r") as file:
+    paths = yaml.safe_load(file)
+if not os.path.exists("tmp"):
+    os.makedirs("tmp")
+    
+CSV_PATH = paths["CSV_PATH"]
+EVALUATION_CSV_PATH_NON_TRAINED = paths["EVALUATION_CSV_PATH_NON_TRAINED"]
+EVALUATION_CSV_PATH_TRAINED = paths["EVALUATION_CSV_PATH_TRAINED"]
+EVALUATION_PATH = paths["EVALUATION_PATH"]
+MODEL_PATH = paths["MODEL_PATH"]
 SEED = 42
 
+class DataEntry(TypedDict):
+    order_id: int
+    user_id: str
+    skill_name: str
+    correct: int
+    item_id: str
+    subject_id: str
 
 class StudentResult(TypedDict):
     maestry_prob: float
@@ -341,7 +354,7 @@ class StudentModel:
 
         return {"students_states": students_states, "skills_states": skills_states}
 
-    def update_dataset(
+    def update_dataset_tabular(
         self,
         order_id: List[int],
         user_id: List[str],
@@ -451,6 +464,94 @@ class StudentModel:
         self.repository.save_file(self.model_path, student_model)
         return student_model
 
+    def update_dataset(
+        self, data: List[DataEntry]):
+        # item ID no se usa en este caso, pero puede usarse para ver que
+        # preguntas son más o menos difíciles de aprender
+        # Puedo introducir la lógica pero habría que entrenar otro modelo para ello
+        """Actualiza el dataset (de existir) y entrena el modelo.
+
+        Args:
+            order_id (list[str]): Descripción del índice de orden único de cada pregunta (item_id) respondida por un estudiante. No se puede repetir entre datasets. Ej: numerical_item_id + timestamp.
+            user_id (list[str]): ID del estudiante.
+            skill_name (list[str]): Nombre de la habilidad.
+            correct (list[int]): 1 si la respuesta es correcta, 0 si es incorrecta, -1 si no se ha respondido.
+            item_id (list[str]): ID de la pregunta. Se puede repetir indicando que se ha hecho varias veces la misma pregunta.
+
+        Returns:
+            dict: Diccionario con los estados de los estudiantes y habilidades.
+                - students_states: DataFrame con los estados de los estudiantes.
+                - skills_states: DataFrame con los estados de las habilidades.
+        """
+        # Comprobar que todos los argumentos son listas
+        # Transformar la entrada (list[DataEntry]) a un Dict con listas
+        order_id = [entry["order_id"] for entry in data]
+        user_id = [entry["user_id"] for entry in data]
+        skill_name = [entry["skill_name"] for entry in data]
+        correct = [entry["correct"] for entry in data]
+        item_id = [entry["item_id"] for entry in data]
+        subject_id = [entry["subject_id"] for entry in data]
+
+        if os.path.exists(self.csv_path):
+            # Cargar el CSV
+            df = pd.read_csv(self.csv_path)
+            new_df = {
+                "order_id": order_id,
+                "user_id": user_id,
+                "skill_name": skill_name,
+                "correct": correct,
+                "item_id": item_id,
+                "subject_id": subject_id,
+            }
+            try:
+                new_df = pd.DataFrame(new_df)
+            except Exception as e:
+                logging.error(f"Error creating DataFrame: {e}")
+                return {"students_states": None, "skills_states": None}
+            # Comprobar que coinciden los nombres de las columnas
+            if not all(col in df.columns for col in new_df.columns):
+                logging.error(
+                    "Column names do not match. It is not possible to update the dataset"
+                )
+                return {"students_states": None, "skills_states": None}
+
+            df = pd.concat([df, new_df], ignore_index=True)
+        else:
+            # Crear el CSV
+            df = {
+                "order_id": order_id,
+                "user_id": user_id,
+                "skill_name": skill_name,
+                "correct": correct,
+                "item_id": item_id,
+                "subject_id": subject_id,
+            }
+            # Guardar el CSV
+            try:
+                df = pd.DataFrame(df)
+            except Exception as e:
+                logging.error(f"Error creating DataFrame: {e}")
+                return {"students_states": None, "skills_states": None}
+
+        # Entrenamos según el caso
+        try:
+            self.student_model = self.train(df)
+        except Exception as e:
+            logging.error(f"Error training the model: {e}")
+            return {"students_states": None, "skills_states": None}
+
+        # Skill in subject
+        skill_subject = {}
+        for skill in df["skill_name"].tolist():
+            skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
+        students_states = self.calculate_students_states(skill_subject)
+
+        skills_states = self.calculate_skills_states(skill_subject)
+
+        # TODO
+        # Lógica para guardar el CSV
+        df.to_csv(self.csv_path, index=False)
+        return {"students_states": students_states, "skills_states": skills_states}
 
     def calculate_students_states(
         self,

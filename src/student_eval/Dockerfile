@@ -2,8 +2,7 @@ FROM python:3.9.22-alpine3.21
 
 WORKDIR /app
 
-# Set the PYTHONPATH to the app directory
-ENV PYTHONPATH=/app
+FROM python:3.7.16
 
 COPY ./student-eval/requirements.txt /app/requirements.txt
 # Install gcc and g++
