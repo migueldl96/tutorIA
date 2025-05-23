@@ -3,9 +3,14 @@ from typing import List, Dict, Any
 from .models import StudentModel, DataEntry
 from pydantic import BaseModel
 from fastapi import Request  # Importar Request
-
+from repositories import AzureBlobRepository
 router = APIRouter(prefix="/evaluation")
-model = StudentModel()
+
+# Init backend repository
+blob_repo = AzureBlobRepository("tutoria")
+
+# Inicializar el modelo
+model = StudentModel(blob_repo)
 
 # Definir modelos de datos para la API
 class TrainingDataTabular(BaseModel):
@@ -57,7 +62,7 @@ async def update_dataset(request: Request):
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @router.post("/update_dataset_tabular")
-async def update_dataset(data: TrainingDataTabular):
+async def update_dataset_tabular(data: TrainingDataTabular):
     try:
         results = model.update_dataset_tabular(
             order_id=data.order_id,
