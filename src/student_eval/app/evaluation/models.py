@@ -1,4 +1,5 @@
 import logging
+import tempfile
 from typing import Dict, DefaultDict, List
 from typing_extensions import TypedDict
 from collections import defaultdict
@@ -7,6 +8,8 @@ from pyBKT.models import Model, Roster
 import os
 import yaml
 import pickle
+
+from repositories.base_repository import BaseRepository
 
 # Si no se declara, el prior será 0 si estamos en multiprior
 # Si se declara aprende un prior general, y otro específico
@@ -47,15 +50,16 @@ class StudentModel:
     This is a placeholder class for the model that evaluates the student.
     """
 
-    def __init__(self):
-        self.csv_path = CSV_PATH
-        self.model_path = MODEL_PATH
-        self.evaluation_csv_path_non_trained = EVALUATION_CSV_PATH_NON_TRAINED
-        self.evaluation_csv_path_trained = EVALUATION_CSV_PATH_TRAINED
-        self.evaluation_path = EVALUATION_PATH
+    def __init__(self, repository: BaseRepository):
+        self.repository = repository
+        self.csv_path = "datasets/students.csv"
+        self.model_path = "models/student_model.pkl"
+        self.evaluation_csv_path_non_trained = "datasets/evaluation_non_trained.csv"
+        self.evaluation_csv_path_trained = "datasets/evaluation_trained.csv"
+        self.evaluation_path = "datasets/evaluation"
         self.student_model = None
         self.roster = None
-        pass
+        
 
     def start_real_time_evaluation(
         self, user_id: str, skill_names: List[str]
@@ -365,9 +369,9 @@ class StudentModel:
         """
         # Comprobar que todos los argumentos son listas
 
-        if os.path.exists(self.csv_path):
+        if self.repository.file_exists(self.csv_path):
             # Cargar el CSV
-            df = pd.read_csv(self.csv_path)
+            df = pd.read_csv(self.repository.get_file(self.csv_path))
             new_df = {
                 "order_id": order_id,
                 "user_id": user_id,
@@ -439,11 +443,12 @@ class StudentModel:
         # Entrenar el modelo
         student_model.fit(data=df, multiprior="user_id", forgets=True)
 
-        # TODO
         # Lógica para guardar el modelo
-        if not self.model_path.endswith(".pkl"):
-            self.model_path = os.path.join(self.model_path, "student_model.pkl")
-        student_model.save(self.model_path)
+        # temp dir
+        temp_dir = tempfile.mkdtemp()
+        model_path = os.path.join(temp_dir, "student_model.pkl")
+        student_model.save(model_path)
+        self.repository.save_file(self.model_path, student_model)
         return student_model
 
 
