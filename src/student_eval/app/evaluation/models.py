@@ -1,4 +1,6 @@
+from io import StringIO
 import logging
+import tempfile
 from typing import Dict, DefaultDict, List
 from typing_extensions import TypedDict
 from collections import defaultdict
@@ -7,21 +9,15 @@ from pyBKT.models import Model, Roster
 import os
 import yaml
 import pickle
+import dotenv
+from repositories.base_repository import BaseRepository
+
+dotenv.load_dotenv()
 
 # Si no se declara, el prior será 0 si estamos en multiprior
 # Si se declara aprende un prior general, y otro específico
 a_priori_probs = {}
-# Abrir rutas.yml
-with open("rutas.yml", "r") as file:
-    paths = yaml.safe_load(file)
-if not os.path.exists("tmp"):
-    os.makedirs("tmp")
-    
-CSV_PATH = paths["CSV_PATH"]
-EVALUATION_CSV_PATH_NON_TRAINED = paths["EVALUATION_CSV_PATH_NON_TRAINED"]
-EVALUATION_CSV_PATH_TRAINED = paths["EVALUATION_CSV_PATH_TRAINED"]
-EVALUATION_PATH = paths["EVALUATION_PATH"]
-MODEL_PATH = paths["MODEL_PATH"]
+
 SEED = 42
 
 class DataEntry(TypedDict):
@@ -60,15 +56,22 @@ class StudentModel:
     This is a placeholder class for the model that evaluates the student.
     """
 
-    def __init__(self):
-        self.csv_path = CSV_PATH
-        self.model_path = MODEL_PATH
-        self.evaluation_csv_path_non_trained = EVALUATION_CSV_PATH_NON_TRAINED
-        self.evaluation_csv_path_trained = EVALUATION_CSV_PATH_TRAINED
-        self.evaluation_path = EVALUATION_PATH
+    def __init__(self, repository: BaseRepository):
+        self.repository = repository
+        self.csv_path = os.getenv("CSV_PATH", "datasets/students.csv")
+        self.model_path = os.getenv("MODEL_PATH", "models/student_model.pkl")
+        self.evaluation_csv_path_non_trained = os.getenv(
+            "EVALUATION_CSV_PATH_NON_TRAINED", "datasets/evaluation_non_trained.csv"
+        )
+        self.evaluation_csv_path_trained = os.getenv(
+            "EVALUATION_CSV_PATH_TRAINED", "datasets/evaluation_trained.csv"
+        )
+        self.evaluation_path = os.getenv(
+            "EVALUATION_PATH", "datasets/evaluation"
+        )
         self.student_model = None
         self.roster = None
-        pass
+        
 
     def start_real_time_evaluation(
         self, user_id: str, skill_names: List[str]
@@ -93,19 +96,13 @@ class StudentModel:
         logger = logging.getLogger("uvicorn.error")
         logger.info("Starting real time evaluation...")
 
-        # Comprobar ruta al archivo de configuración
-        if not os.path.exists(self.evaluation_path):
-            logger.error("Evaluation path does not exist")
-            response["status"] = "error"
-            response["message"] = "Evaluation path does not exist"
-            return response
-
         # Path al archivo de configuración
         roster_config_path = self.evaluation_path + "/roster_config.yaml"
 
-        if os.path.exists(roster_config_path):
-            with open(roster_config_path, "r") as file:
-                roster_config = yaml.safe_load(file) or {}
+        # If file exists in repo, download it
+        if self.repository.file_exists(roster_config_path):
+            roster_config = self.repository.get_file(roster_config_path)
+            logger.info(f"Configuration file {roster_config_path} downloaded")
         else:
             roster_config = {}
 
@@ -126,11 +123,12 @@ class StudentModel:
         # Si hay skills faltantes, crear un nuevo roster sólo para ellas
         if missing:
             # cargar modelo BKT
-            if not os.path.exists(self.model_path):
+            if not self.repository.file_exists(self.model_path):
                 response.update(status="error", message="Model path does not exist")
                 return response
-            with open(self.model_path, "rb") as f:
-                student_model = pickle.load(f)
+            # cargar el modelo
+            model_data = self.repository.get_file(self.model_path)
+            student_model = pickle.loads(model_data)
             
             model_params = student_model.params().reset_index()
             a_prioris = model_params.loc[(model_params["param"] == "learns") & (model_params["class"] == user_id)]
@@ -150,8 +148,7 @@ class StudentModel:
             roster_path = os.path.join(self.evaluation_path, roster_fname)
 
             # persistir roster
-            with open(roster_path, "wb") as f:
-                pickle.dump(roster, f)
+            self.repository.save_file(roster_path, pickle.dumps(roster))
 
             # actualizar configuración: asociar cada skill faltante a este mismo archivo
             existing_skills_map[roster_path] = missing
@@ -160,8 +157,10 @@ class StudentModel:
 
         # Guardar de nuevo la configuración si hemos creado algo
         if missing:
-            with open(roster_config_path, "w") as f:
-                yaml.safe_dump(roster_config, f)
+            self.repository.save_file(
+                roster_config_path,
+                yaml.dump(roster_config).encode("utf-8")
+            )
 
         # 6) Preparar la respuesta
         response["status"] = "ok"
@@ -206,12 +205,19 @@ class StudentModel:
         # Guardar los roster y skills en un yaml con la ruta al roster
         result = {"state": None, "correct_prob": None, "state_prob": None}
 
-        try:
-            with open(roster_path, "rb") as file:
-                self.roster = pickle.load(file)
-        except FileNotFoundError:
-            logger.error("Roster file not found")
+        # Comprobar que el archivo existe
+        if not self.repository.file_exists(roster_path):
+            logger.error(f"Roster file {roster_path} not found")
             return {"state": None, "correct_prob": None, "state_prob": None}
+        # Cargar el roster
+        roster_data = self.repository.get_file(roster_path)
+        # Deserializar el objeto
+        try:
+            self.roster = pickle.loads(roster_data)
+        except Exception as e:
+            logger.error(f"Error loading roster: {e}")
+            return {"state": None, "correct_prob": None, "state_prob": None}
+
 
         logger.info("Roster loaded successfully")
         logger.info(f"Evaluating student {user_id} in skill {skill_name}")
@@ -232,12 +238,14 @@ class StudentModel:
             f"Student {user_id} in skill {skill_name} evaluated. Storing data..."
         )
         # Guardamos el roster
-        with open(roster_path, "wb") as file:
-            pickle.dump(self.roster, file)
+        self.repository.save_file(
+            roster_path,
+            pickle.dumps(self.roster),
+        )
         logger.info("Roster updated successfully")
 
         # Guardar los datos en el CSV
-        if not os.path.exists(self.evaluation_csv_path_non_trained):
+        if not self.repository.file_exists(self.evaluation_csv_path_non_trained):
             # Crear el CSV
             df = {
                 "order_id": [order_id],
@@ -249,11 +257,17 @@ class StudentModel:
             }
             # Guardar el CSV
             df = pd.DataFrame(df)
-            df.to_csv(self.evaluation_csv_path_non_trained, index=False)
+            csv_buffer = StringIO()
+            df.to_csv(csv_buffer, index=False)
+            self.repository.save_file(
+                self.evaluation_csv_path_non_trained,
+                csv_buffer.getvalue(),
+            )
             logger.info("Data stored successfully")
         else:
             # Cargar el CSV
-            df = pd.read_csv(self.evaluation_csv_path_non_trained)
+            csv_data = self.repository.get_file(self.evaluation_csv_path_non_trained)
+            df = pd.read_csv(StringIO(csv_data.decode()))
             new_df = {
                 "order_id": [order_id],
                 "user_id": [user_id],
@@ -269,7 +283,12 @@ class StudentModel:
                     "Column names do not match. It is not possible to update the dataset"
                 )
             df = pd.concat([df, new_df], ignore_index=True)
-            df.to_csv(self.evaluation_csv_path_non_trained, index=False)
+            csv_buffer = StringIO()
+            df.to_csv(csv_buffer, index=False)
+            self.repository.save_file(
+                self.evaluation_csv_path_non_trained,
+                csv_buffer.getvalue(),
+            )
             logger.info("Data stored successfully")
         return result
 
@@ -288,11 +307,16 @@ class StudentModel:
                 - skills_states: DataFrame con los estados de las habilidades.
         """
 
-        if os.path.exists(self.csv_path):
+        if self.repository.file_exists(self.csv_path):
             # Cargar el CSV
-            df = pd.read_csv(self.csv_path)
-            if os.path.exists(self.evaluation_csv_path_non_trained):
-                new_df = pd.read_csv(self.evaluation_csv_path_non_trained)
+            csv_data = self.repository.get_file(self.csv_path)
+            df = pd.read_csv(StringIO(csv_data.decode()))
+            if self.repository.file_exists(self.evaluation_csv_path_non_trained):
+                # Cargar el CSV de evaluación
+                csv_data = self.repository.get_file(
+                    self.evaluation_csv_path_non_trained
+                )
+                new_df = pd.read_csv(StringIO(csv_data.decode()))
             else:
                 logging.error("Evaluation CSV file not found")
                 return {"students_states": None, "skills_states": None}
@@ -324,17 +348,36 @@ class StudentModel:
 
         # TODO
         # Lógica para guardar el CSV
-        df.to_csv(self.csv_path, index=False)
+        csv_buffer = StringIO()
+        df.to_csv(csv_buffer, index=False)
+        self.repository.save_file(self.csv_path, csv_buffer.getvalue())
 
         # Movemos el csv de evaluacion a la ruta de entrenados
-        os.remove(self.evaluation_csv_path_non_trained)
-        if os.path.exists(self.evaluation_csv_path_trained):
-            last_trained_csv = pd.read_csv(self.evaluation_csv_path_trained)
+        self.repository.delete_file(
+            self.evaluation_csv_path_non_trained
+        )
+        if self.repository.file_exists(self.evaluation_csv_path_trained):
+            # Cargar el CSV
+            last_trained_csv = self.repository.get_file(
+                self.evaluation_csv_path_trained
+            )
+            last_trained_csv = pd.read_csv(StringIO(last_trained_csv.decode()))
             last_trained_csv = pd.concat([last_trained_csv, new_df], ignore_index=True)
-            last_trained_csv.to_csv(self.evaluation_csv_path_trained, index=False)
+            # Guardar el CSV
+            last_trained_csv_buffer = StringIO()
+            last_trained_csv.to_csv(last_trained_csv_buffer, index=False)
+            self.repository.save_file(
+                self.evaluation_csv_path_trained,
+                last_trained_csv_buffer.getvalue(),
+            )
         else:
             # Guardar el CSV
-            new_df.to_csv(self.evaluation_csv_path_trained, index=False)
+            last_trained_csv_buffer = StringIO()
+            last_trained_csv.to_csv(new_df, index=False)
+            self.repository.save_file(
+                self.evaluation_csv_path_trained,
+                last_trained_csv_buffer.getvalue(),
+            )
 
         if del_roaster:
             # Eliminar contenido de la carpeta de evaluación
@@ -378,9 +421,9 @@ class StudentModel:
         """
         # Comprobar que todos los argumentos son listas
 
-        if os.path.exists(self.csv_path):
+        if self.repository.file_exists(self.csv_path):
             # Cargar el CSV
-            df = pd.read_csv(self.csv_path)
+            df = pd.read_csv(self.repository.get_file(self.csv_path))
             new_df = {
                 "order_id": order_id,
                 "user_id": user_id,
@@ -452,11 +495,8 @@ class StudentModel:
         # Entrenar el modelo
         student_model.fit(data=df, multiprior="user_id", forgets=True)
 
-        # TODO
         # Lógica para guardar el modelo
-        if not self.model_path.endswith(".pkl"):
-            self.model_path = os.path.join(self.model_path, "student_model.pkl")
-        student_model.save(self.model_path)
+        self.repository.save_file(self.model_path, pickle.dumps(student_model))
         return student_model
 
     def update_dataset(
@@ -487,9 +527,10 @@ class StudentModel:
         item_id = [entry["item_id"] for entry in data]
         subject_id = [entry["subject_id"] for entry in data]
 
-        if os.path.exists(self.csv_path):
+        if self.repository.file_exists(self.csv_path):
+            data = self.repository.get_file(self.csv_path)
             # Cargar el CSV
-            df = pd.read_csv(self.csv_path)
+            df = pd.read_csv(StringIO(data.decode()))
             new_df = {
                 "order_id": order_id,
                 "user_id": user_id,
@@ -543,9 +584,10 @@ class StudentModel:
 
         skills_states = self.calculate_skills_states(skill_subject)
 
-        # TODO
-        # Lógica para guardar el CSV
-        df.to_csv(self.csv_path, index=False)
+        # Save the CSV in the repository
+        csv_buffer = StringIO()
+        df.to_csv(csv_buffer, index=False)
+        self.repository.save_file(self.csv_path, csv_buffer.getvalue())
         return {"students_states": students_states, "skills_states": skills_states}
 
     def calculate_students_states(

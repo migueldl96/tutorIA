@@ -1,5 +1,6 @@
-from src.common.services.evaluations_service import BaseService
+from src.common.services.base_service import BaseService
 from src.common.dto.evaluation_result import InitialEvaluationDTO
+from src.common.services.azure_sql_service import AzureSQLService
 class EvaluationResultsController:
     """
     Controller for managing evaluation results. It interacts with the evaluation results service to fetch and save results.

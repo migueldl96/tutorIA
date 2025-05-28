@@ -1,9 +1,9 @@
 # ──────────────────────────────────────────────────────────────
 # API y validaciones
 # ──────────────────────────────────────────────────────────────
-fastapi[standard]>=0.113.0,<0.114.0
-pydantic>=2.7.0,<3.0.0
-uvicorn[standard]>=0.25.0,<0.30.0
+fastapi[standard]
+pydantic
+uvicorn[standard]
 
 # ──────────────────────────────────────────────────────────────
 # Machine Learning / Cálculo numérico
@@ -27,11 +27,6 @@ pybind11>=2.11
 # Forzamos compilación para que se enlace con el compilador disponible
 pyBKT==1.4.1 --no-binary=pyBKT
 
-# ──────────────────────────────────────────────────────────────
-# Tests y herramientas de desarrollo
-# ──────────────────────────────────────────────────────────────
-pytest==7.4.4
-pytest-asyncio>=0.23      # si vas a probar endpoints async
 typing-extensions==4.7.1
 python-dateutil==2.9.0.post0
 pyyaml==6.0.1
@@ -44,3 +39,6 @@ urllib3==2.0.7
 idna==3.10
 charset-normalizer==3.4.2
 certifi>=2024.04.26
+
+azure-storage-blob
+azure-core

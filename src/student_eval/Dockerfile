@@ -1,12 +1,18 @@
-
 FROM python:3.7.16
 
-WORKDIR /code
+WORKDIR /app
 
-COPY ./requirements.txt /code/requirements.txt
+COPY ./student_eval/requirements.txt /app/requirements.txt
+# Install gcc and g++
+RUN apt install gcc g++ -y
 
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+# Install unixodbc-dev
+RUN apt update
+RUN apt install -y unixodbc-dev
 
-COPY ./ /code/app
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-CMD ["fastapi", "run", "app/main.py", "--port", "80", "--host", "0.0.0.0"]
+COPY ./common /app/src/common
+COPY ./student_eval/app/ /app/src/student_eval/app
+
+CMD ["python", "src/student_eval/app/main.py"]
