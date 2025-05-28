@@ -1,5 +1,0 @@
-fastapi[standard]
-pydantic
-pyodbc
-uvicorn
-python-dotenv
