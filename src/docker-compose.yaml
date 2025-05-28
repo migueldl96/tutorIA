@@ -2,13 +2,29 @@ services:
   student-evaluation:
     build:
       context: .
-      dockerfile: student-eval/Dockerfile
+      dockerfile: student_eval/Dockerfile
     ports:
       - "80:80"
+    environment:
+      - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
+      - CSV_PATH=${CSV_PATH}
+      - EVALUATION_CSV_PATH_NON_TRAINED=${EVALUATION_CSV_PATH_NON_TRAINED}
+      - EVALUATION_CSV_PATH_TRAINED=${EVALUATION_CSV_PATH_TRAINED}
+      - EVALUATION_PATH=${EVALUATION_PATH}
+      - MODEL_PATH=${MODEL_PATH}
 
   content-generator:
     build:
       context: .
       dockerfile: content_generator/Dockerfile
     ports:
-      - "3001:3001"
+      - "8080:8080"
+    environment:
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_MODEL_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_DEPLOYMENT_NAME=${AZURE_OPENAI_DEPLOYMENT_NAME}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
+      - AZURE_SEARCH_ENDPOINT=${AZURE_SEARCH_ENDPOINT}
+      - AZURE_SEARCH_KEY=${AZURE_SEARCH_KEY}
+
+ 
