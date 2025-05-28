@@ -1,10 +1,8 @@
-FROM python:3.9.22-alpine3.21
+FROM python:3.7.16
 
 WORKDIR /app
 
-FROM python:3.7.16
-
-COPY ./student-eval/requirements.txt /app/requirements.txt
+COPY ./student_eval/requirements.txt /app/requirements.txt
 # Install gcc and g++
 RUN apk add --no-cache gcc g++
 
@@ -14,6 +12,6 @@ RUN apk add --no-cache unixodbc-dev
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 COPY ./common /app/src/common
-COPY ./student-eval/app/ /app/src/student-eval/app
+COPY ./student_eval/app/ /app/src/student_eval/app
 
-CMD ["python", "src/student-eval/app/main.py"]
+CMD ["python", "src/student_eval/app/main.py"]
