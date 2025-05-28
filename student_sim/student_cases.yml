@@ -1,0 +1,79 @@
+student_1:
+  name: "Estudiante 1"
+  prob_slip: 0.1
+  skills:
+    skill_1:
+      name: "parametros_cinematicos"
+      prob_guess: 0.4
+      subject: Cinematica en una dimension
+      b: 5
+    skill_2:
+      name: "movimiento_aceleracion_constante"
+      prob_guess: 0.4
+      subject: Cinematica en una dimension
+      b: 6
+    skill_3:
+      name: "caida_libre"
+      subject: Cinematica en una dimension
+      prob_guess: 0.2
+      b: 4
+    skill_4:
+      name: "analisis_grafico_movimiento_unidimensional"
+      subject: Cinematica en una dimension
+      prob_guess: 0.2
+      b: 6
+
+student_2:
+  prob_slip: 0.1
+  name: "Estudiante 2"
+  skills:
+    skill_1:
+      name: "ley_de_ohm"
+      prob_guess: 0.7
+      subject: Corriente continua
+      b: 5
+    skill_2:
+      name: "circuitos_electricos"
+      prob_guess: 0.4
+      subject: Corriente continua
+      b: 5
+    skill_3:
+      name: "corriente_alterna"
+      prob_guess: 0.4
+      subject: Corriente continua
+      b: 5
+    skill_4:
+      name: "potencia_electrica"
+      prob_guess: 0.2
+      subject: Corriente continua
+      b: 7
+
+student_3:
+  prob_slip: 0.1
+  name: "Estudiante 3"
+  skills:
+    skill_1:
+      name: "reflexion"
+      prob_guess: 0.6
+      subject: Optica geometrica
+      b: 3
+    skill_2:
+      name: "reflexion_espejos_planos"
+      prob_guess: 0.6
+      subject: Optica geometrica
+      b: 4
+    skill_3:
+      name: "imagenes_espejos_curvos"
+      prob_guess: 0.2
+      subject: Optica geometrica
+      b: 10
+    skill_4:
+      name: "refraccion"
+      prob_guess: 0.2
+      subject: Optica geometrica
+      b: 10
+    skill_5:
+      name: "leyes_de_snell"
+      subject: Optica geometrica
+      prob_guess: 0.1
+      b: 8
