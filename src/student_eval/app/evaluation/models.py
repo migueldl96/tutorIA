@@ -541,6 +541,13 @@ class StudentModel:
             }
             try:
                 new_df = pd.DataFrame(new_df)
+                # Comprobamos que order_id y correct son enteros
+                # Enviamos un error si no lo son
+                if not pd.api.types.is_integer_dtype(new_df["order_id"]):
+                    raise ValueError("order_id must be an integer")
+                if not pd.api.types.is_integer_dtype(new_df["correct"]):
+                    raise ValueError("correct must be an integer")
+                
             except Exception as e:
                 logging.error(f"Error creating DataFrame: {e}")
                 return {"students_states": None, "skills_states": None}
