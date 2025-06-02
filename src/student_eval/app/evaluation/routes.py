@@ -112,3 +112,19 @@ async def update_dataset_evaluation(data: UpdateEvalData):
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/check_student_data")
+async def check_student_data():
+    try:
+        results = model.student_data_exists()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/delete_student_data")
+async def delete_student_data():
+    try:
+        results = model.del_student_data()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

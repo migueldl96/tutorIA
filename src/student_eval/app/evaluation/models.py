@@ -666,6 +666,21 @@ class StudentModel:
             }
 
         return out
+    
+    def student_data_exists(self) -> bool:
+        """ Check if the student data exists in the repository.
+
+        Returns:
+            bool: True if the student data exists, False otherwise.
+        """
+        return self.repository.file_exists(self.csv_path)
+
+    def del_student_data(self):
+        """Delete the student data from the repository."""
+        if self.repository.file_exists(self.csv_path):
+            self.repository.delete_file(self.csv_path)
+            return True
+        return False
 
 
     def calculate_skills_states(
