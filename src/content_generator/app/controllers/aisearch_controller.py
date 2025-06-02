@@ -43,7 +43,7 @@ async def search_by_skill(
             total_results=len(results)
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/subject/{subject}", response_model=SearchResponse)
 async def search_by_subject(
