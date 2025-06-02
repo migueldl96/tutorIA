@@ -5,3 +5,4 @@ pyodbc
 langchain
 langchain-openai
 python-dotenv
+azure-search-documents
