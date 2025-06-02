@@ -6,7 +6,7 @@ from langchain.output_parsers import PydanticOutputParser
 
 from src.content_generator.app.dto.quiz import Quiz
 from src.content_generator.app.controllers.prompt_templates import SYSTEM_PROMPT, USER_PROMPT
-
+import random
 class QuizController:
     def __init__(self):
         load_dotenv()
@@ -15,8 +15,10 @@ class QuizController:
         self.llm = AzureChatOpenAI(
             azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
             openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_GENERATOR_ENDPOINT"),
-            api_key=os.getenv("AZURE_OPENAI_API_KEY")
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            temperature=0.7,
+            seed=random.randint(0, 10000)  # Random seed for reproducibility
         )
         
         # Initialize output parser
