@@ -56,11 +56,13 @@ async def update_dataset(request: Request):
             results = model.update_dataset(data=data["data"])
         else:
             raise HTTPException(status_code=400, detail="Se esperaba una lista de objetos o un objeto con campo 'data'")
-        if not list(results.items())[0]:
-            raise HTTPException(status_code=400, detail="No se pudo actualizar el dataset")
         return results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        # SI la excepción es ValueError, devolver un error 400
+        if isinstance(e, ValueError):
+            raise HTTPException(status_code=400, detail=f"Error de validación: {str(e)}")
+        # Para otras excepciones, devolver un error 500
+        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
 
 @router.post("/update_dataset_tabular")
 async def update_dataset_tabular(data: TrainingDataTabular):

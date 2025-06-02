@@ -550,13 +550,13 @@ class StudentModel:
                 
             except Exception as e:
                 logging.error(f"Error creating DataFrame: {e}")
-                return {"students_states": None, "skills_states": None}
+                raise e
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
                 logging.error(
                     "Column names do not match. It is not possible to update the dataset"
                 )
-                return {"students_states": None, "skills_states": None}
+                raise ValueError("Column names do not match. It is not possible to update the dataset")
 
             df = pd.concat([df, new_df], ignore_index=True)
         else:
@@ -574,14 +574,14 @@ class StudentModel:
                 df = pd.DataFrame(df)
             except Exception as e:
                 logging.error(f"Error creating DataFrame: {e}")
-                return {"students_states": None, "skills_states": None}
+                raise e
 
         # Entrenamos según el caso
         try:
             self.student_model = self.train(df)
         except Exception as e:
             logging.error(f"Error training the model: {e}")
-            return {"students_states": None, "skills_states": None}
+            raise e
 
         # Skill in subject
         skill_subject = {}
