@@ -39,6 +39,9 @@ class UpdateEvalData(BaseModel):
 class EvaluationSetup(BaseModel):
     user_id: str
     skill_names: List[str]
+
+class DeleteRoasterData(BaseModel):
+    user_id: str
     
 @router.post("/update_dataset")
 async def update_dataset(request: Request):
@@ -116,18 +119,34 @@ async def update_dataset_evaluation(data: UpdateEvalData):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/check_student_data")
-async def check_student_data():
+@router.post("/check_students_dataset")
+async def check_students_dataset():
     try:
-        results = model.student_data_exists()
+        results = model.students_dataset_exists()
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/delete_student_data")
-async def delete_student_data():
+@router.post("/delete_students_dataset")
+async def delete_students_dataset():
     try:
-        results = model.del_student_data()
+        results = model.del_students_dataset()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/check_roaster_files")
+async def check_roaster_files():
+    try:
+        results = model.roasters_exists()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/delete_roaster_files")
+async def delete_roaster_files(data: DeleteRoasterData):
+    try:
+        results = model.del_roasters(user_id=data.user_id)
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

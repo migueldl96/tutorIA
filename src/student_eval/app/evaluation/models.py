@@ -50,6 +50,16 @@ class EvaluationResponse(TypedDict):
     message: str
     roster_paths: Dict[str, str]
 
+class DataResponse(TypedDict):
+    exists: bool
+    message: str
+    data: Dict
+
+class DeletionResponse(TypedDict):
+    deleted: str
+    message: str
+    
+
 
 class StudentModel:
     """
@@ -72,6 +82,19 @@ class StudentModel:
         self.student_model = None
         self.roster = None
         
+    def load_roaster_config(self):
+        """
+        Carga la configuración del roaster desde un archivo YAML.
+        Si el archivo no existe, devuelve un diccionario vacío.
+        """
+        roster_config_path = self.evaluation_path + "/roster_config.yaml"
+        if self.repository.file_exists(roster_config_path):
+            # Load in bytes
+            roster_config_bytes = self.repository.get_file(roster_config_path)
+            # transform to bytes
+            return yaml.safe_load(roster_config_bytes.decode('utf-8')), roster_config_path
+        else:
+            return {}, roster_config_path
 
     def start_real_time_evaluation(
         self, user_id: str, skill_names: List[str]
@@ -95,20 +118,16 @@ class StudentModel:
 
         logger = logging.getLogger("uvicorn.error")
         logger.info("Starting real time evaluation...")
-
-        # Path al archivo de configuración
-        roster_config_path = self.evaluation_path + "/roster_config.yaml"
-
-        # If file exists in repo, download it
-        if self.repository.file_exists(roster_config_path):
-            # Load in bytes
-            roster_config_bytes = self.repository.get_file(roster_config_path)
-            # transform to bytes
-            roster_config = yaml.safe_load(roster_config_bytes.decode('utf-8'))
-            logger.info(f"Configuration file {roster_config_path} downloaded")
-        else:
+        
+        try:
+            roster_config, roster_config_path = self.load_roaster_config()
+            logger.info("Roster configuration loaded successfully/created.")
+        except Exception as e:
+            logger.error(f"Error loading roster configuration: {e}")
+            logger.error(f"Creating new roster configuration.")
             roster_config = {}
-        logger.info(f"Roster Config Loaded: {roster_config}")
+            roster_config_path = self.evaluation_path + "/roster_config.yaml"
+
 
         user_entry = roster_config.setdefault(user_id, {})
         existing_skills_map = user_entry.setdefault("skills", {})
@@ -681,21 +700,6 @@ class StudentModel:
             }
 
         return out
-    
-    def student_data_exists(self) -> bool:
-        """ Check if the student data exists in the repository.
-
-        Returns:
-            bool: True if the student data exists, False otherwise.
-        """
-        return self.repository.file_exists(self.csv_path)
-
-    def del_student_data(self):
-        """Delete the student data from the repository."""
-        if self.repository.file_exists(self.csv_path):
-            self.repository.delete_file(self.csv_path)
-            return True
-        return False
 
 
     def calculate_skills_states(
@@ -779,3 +783,148 @@ class StudentModel:
             }
 
         return dict(out)  # convierte defaultdict en dict normal
+    
+    def students_dataset_exists(self) -> DataResponse:
+        """ Check if the student data exists in the repository.
+
+        Returns:
+            response[DataResponse]: A DataResponse object indicating whether the student data exists,
+            and if it does, the data in dictionary format.
+        """
+        if self.repository.file_exists(self.csv_path):
+            # Load the CSV to check if it has data
+            csv_data = self.repository.get_file(self.csv_path)
+            df = pd.read_csv(StringIO(csv_data.decode()))
+            if not df.empty:
+                response = DataResponse(
+                    exists=True, message="Students dataset exists.", data=df.to_dict(orient='records')
+                )
+            else:
+                response = DataResponse(
+                    exists=False, message="Students dataset is empty.", data={} 
+                )
+        else:
+            response = DataResponse(
+                exists=False, message="Students dataset does not exist.", data={}
+            )
+        return response
+
+    def del_students_dataset(self) -> DeletionResponse:
+        """Delete the student data from the repository."""
+        if self.repository.file_exists(self.csv_path):
+            self.repository.delete_file(self.csv_path)
+            response = DeletionResponse(
+                deleted=True, message="Students dataset deleted successfully."
+            )
+        else:
+            response = DeletionResponse(
+                deleted=False, message="No students dataset to delete."
+            )
+        return response
+    
+    def roasters_exists(self) -> DataResponse:
+        """ Check if roaster config data exits, and if every roaster exists."""
+        try:
+            roster_config, _ = self.load_roaster_config()
+        except Exception as e:
+            return DataResponse(
+                exists=False,
+                message=f"Error loading roster configuration: {str(e)}",
+                data={}
+            )
+        logger = logging.getLogger("uvicorn.error")
+        logger.info("Roaster Config File ", roster_config)
+        # Check if the roster config is empty
+        if not roster_config:
+            return DataResponse(
+                exists=False,
+                message="Roster configuration is empty.",
+                data={}
+            )
+        # Extraer todas las rutas de los archivos de roster
+        roster_paths = set()
+        for user_id, user_data in roster_config.items():
+            logger.info(f"Checking user {user_id} in roster config")
+            logger.info(f"Data {user_data}")
+            skills = user_data.get("skills", {})
+            logger.info(f"Skills paths {skills.keys()}")
+            roster_paths = roster_paths.union(list(skills.keys()))
+        
+        logger.info(f"Roster paths found: {roster_paths}")
+
+        roster_paths = list(roster_paths)
+        
+        # Comprobar si los archivos existen
+        response_data = {}
+        for path in roster_paths:
+            if self.repository.file_exists(path):
+                response_data[path] = True
+            else:
+                response_data[path] = False
+        
+        missing = all(not exists for exists in response_data.values())
+        if missing:
+            message = "Some roaster files are missing."
+        else:
+            message = "All roaster files exist."
+        
+        return DataResponse(
+            exists=not missing,
+            message=message,
+            data=response_data
+        )
+        
+    def del_roasters(self, user_id: str) -> DeletionResponse:
+        """Delete all roaster files and the roster configuration file.
+        If user_id is "all", delete all roaster files.
+        Args:
+            user_id (str): ID of the user whose roaster files to delete. If "all", delete all roaster files.
+        Returns:
+            DeletionResponse: A response object indicating whether the deletion was successful and a message.
+                - deleted (bool): Indica si se eliminaron los archivos.
+                - message (str): Mensaje de respuesta.
+        """
+        logger = logging.getLogger("uvicorn.error")
+        try:
+            roster_config, roster_config_path = self.load_roaster_config()
+        except Exception as e:
+            return DeletionResponse(
+                deleted=False,
+                message=f"Error loading roster configuration: {str(e)}"
+            )
+        if not roster_config:
+            return DeletionResponse(
+                deleted=False,
+                message="No roaster config file."
+            )
+        
+        # Eliminar los archivos de roaster
+        for roaster_user_id, user_data in roster_config.items():
+            skills = user_data.get("skills", {})
+            if roaster_user_id != user_id and user_id != "all":
+                continue
+            logger.info(f"Deleting roaster files for user {roaster_user_id}")
+            for path in skills.keys():
+                if self.repository.file_exists(path):
+                    self.repository.delete_file(path)
+        
+        # Eliminar el archivo de configuración del roaster
+        if user_id == "all":
+            if self.repository.file_exists(roster_config_path):
+                logger.info(f"Deleting roster config file at {roster_config_path}")
+                self.repository.delete_file(roster_config_path)
+        else:
+            # Delete user_id information from the roster config
+            roster_config.pop(user_id, None)
+            if self.repository.file_exists(roster_config_path):
+                logger.info(f"Updating roster config file at {roster_config_path}")
+                self.repository.save_file(
+                    roster_config_path,
+                    yaml.dump(roster_config).encode("utf-8")
+                )
+        
+        return DeletionResponse(
+            deleted=True,
+            message=f"Roaster files and configuration of user {user_id} deleted successfully."
+        )
+    
