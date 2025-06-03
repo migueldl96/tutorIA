@@ -101,13 +101,18 @@ class StudentModel:
 
         # If file exists in repo, download it
         if self.repository.file_exists(roster_config_path):
-            roster_config = self.repository.get_file(roster_config_path)
+            # Load in bytes
+            roster_config_bytes = self.repository.get_file(roster_config_path)
+            # transform to bytes
+            roster_config = yaml.safe_load(roster_config_bytes.decode('utf-8'))
             logger.info(f"Configuration file {roster_config_path} downloaded")
         else:
             roster_config = {}
+        logger.info(f"Roster Config Loaded: {roster_config}")
 
         user_entry = roster_config.setdefault(user_id, {})
         existing_skills_map = user_entry.setdefault("skills", {})
+        
         # existing_skills_map: { roster_path1: [skillA,skillB], roster_path2: [skillC], ... }
 
         # Reusar modelos existentes skill a skill
@@ -541,11 +546,14 @@ class StudentModel:
             }
             try:
                 new_df = pd.DataFrame(new_df)
-                # Comprobamos que order_id y correct son enteros
-                # Enviamos un error si no lo son
-                if not pd.api.types.is_integer_dtype(new_df["order_id"]):
+                # Intentamos convertir order_id y correct a enteros
+                new_df["order_id"] = pd.to_numeric(new_df["order_id"], errors="coerce").astype("Int64")
+                new_df["correct"] = pd.to_numeric(new_df["correct"], errors="coerce").astype("Int64")
+                
+                # Comprobamos si hay valores NaN después de la conversión
+                if new_df["order_id"].isna().any():
                     raise ValueError("order_id must be an integer")
-                if not pd.api.types.is_integer_dtype(new_df["correct"]):
+                if new_df["correct"].isna().any():
                     raise ValueError("correct must be an integer")
                 
             except Exception as e:
