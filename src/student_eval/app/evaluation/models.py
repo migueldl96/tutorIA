@@ -622,167 +622,119 @@ class StudentModel:
         csv_buffer = StringIO()
         df.to_csv(csv_buffer, index=False)
         self.repository.save_file(self.csv_path, csv_buffer.getvalue())
-        return {"students_states": students_states, "skills_states": skills_states}
+            return [{"students_states": students_states, "skills_states": skills_states}]
 
     def calculate_students_states(
         self,
         skill_subject_map: Dict[str, str]
-    ) -> Dict[str, StudentStates]:
+    ) -> List[Dict]:
         """
-        Para cada estudiante, devuelve dos mapas ('learns' y 'forgets'),
-        cada uno agrupado por subject_id con sus skills y su valor.
-
-        Parameters
-        ----------
-        skill_subject_map : Dict[str, str]
-            Mapea cada skill_name a su subject_id.
-
-        Returns
-        -------
-        Dict[str, StudentStates]
-            Ejemplo de salida:
-            {
-                'alice': {
-                    'learns': {
-                        'MATH': {'fractions': 0.23, 'equations': 0.91},
-                        'PHYS': {'optics': 0.42}
-                    },
-                    'forgets': {
-                        'MATH': {'fractions': 0.00, 'equations': 0.12},
-                        'PHYS': {'optics': 0.05}
-                    }
-                },
-                'bob': { ... }
-            }
+        Transformado para devolver una lista de objetos JSON:
+        [
+          {
+            "id": alumno_id,
+            "subject_list": [
+              {
+                "subject_name": asignatura,
+                "skill_list": [
+                  {"name": habilidad, "learn": valor}, …
+                ]
+              }, …
+            ]
+          }, …
+        ]
         """
         if self.student_model is None:
             raise ValueError("Not trained model")
 
-        # 1) extrae un DataFrame plano de parámetros
+        # 1) extrae parámetros y filtra sólo learns (excluyendo default)
         params = self.student_model.params().reset_index()
-
-        # 2) filtra solo learns y forgets, excluyendo el “Default”
         learn_df = params[
             (params.param == "learns") &
             (params["class"].str.lower() != "default")
         ]
-        forget_df = params[
-            (params.param == "forgets") &
-            (params["class"].str.lower() != "default")
-        ]
 
-        # 3) prepara la salida tipada
-        out: Dict[str, StudentStates] = {}
-
-        # auxiliar para crear dict sujetos→{skill:valor}
-        def nested_subject_dict() -> DefaultDict[str, Dict[str, float]]:
-            return defaultdict(dict)
-
-        alumnos = sorted(set(learn_df["class"]) | set(forget_df["class"]))
-
+        # 2) agrupa por alumno y asignatura
+        student_states: List[Dict] = []
+        alumnos = sorted(learn_df["class"].unique())
         for alumno in alumnos:
-            learns_by_subject = nested_subject_dict()
-            forgets_by_subject = nested_subject_dict()
-
-            # rellena learns
-            for row in learn_df[learn_df["class"] == alumno].itertuples():
+            df_al = learn_df[learn_df["class"] == alumno]
+            # dict: subject -> lista de skills
+            subj_map: DefaultDict[str, List[Dict]] = defaultdict(list)
+            for row in df_al.itertuples():
                 subj = skill_subject_map.get(row.skill, "UNKNOWN")
-                learns_by_subject[subj][row.skill] = row.value
+                subj_map[subj].append({
+                    "name": row.skill,
+                    "learn": row.value
+                })
+            # construye lista de subjects
+            subject_list = [
+                {"subject_name": subj, "skill_list": skills}
+                for subj, skills in subj_map.items()
+            ]
+            student_states.append({
+                "id": alumno,
+                "subject_list": subject_list
+            })
 
-            # rellena forgets
-            for row in forget_df[forget_df["class"] == alumno].itertuples():
-                subj = skill_subject_map.get(row.skill, "UNKNOWN")
-                forgets_by_subject[subj][row.skill] = row.value
-
-            out[alumno] = {
-                "learns": dict(learns_by_subject),
-                "forgets": dict(forgets_by_subject)
-            }
-
-        return out
+        return student_states
 
 
     def calculate_skills_states(
         self, skill_subject_map: Dict[str, str]
-    ) -> Dict[str, Dict[str, SkillStates]]:
+    ) -> List[Dict]:
         """
-        Calcula los estados de las habilidades por asignatura.
-
-        Esta función construye un diccionario anidado que agrupa las habilidades por
-        asignatura (`subject_id`) y asocia a cada habilidad sus parámetros estimados
-        por el modelo BKT: probabilidad a priori (`prior`), tasa de aprendizaje
-        (`learns`), tasa de adivinación (`guesses`), tasa de error (`slips`) y tasa
-        de olvido (`forgets`).
-
-        Estructura de salida:
-        ---------------------
-        {
-            'MATH': {
-                'fractions': {
-                    'prior': 0.23,
-                    'learns': 0.91,
-                    'guesses': 0.40,
-                    'slips': 0.05,
-                    'forgets': 0.00
-                },
-                'equations': {
-                    ...
-                }
-            },
-            'PHYS': {
-                ...
-            }
-        }
-
-        Parameters
-        ----------
-        skill_subject_map : Dict[str, str]
-            Diccionario que mapea cada habilidad (`skill_name`) con su correspondiente ID
-            de asignatura (`subject_id`).
-
-        Raises
-        ------
-        ValueError
-            Si el modelo no ha sido entrenado (`self.student_model is None`).
-
-        Returns
-        -------
-        Dict[str, Dict[str, Dict[str, float]]]
-            Diccionario con los estados de las habilidades organizados por asignatura.
+        Transformado para devolver una lista de objetos JSON:
+        [
+          {
+            "subject_name": asignatura,
+            "skill_list": [
+              {
+                "skill_name": habilidad,
+                "states": [
+                  {"name": "prior", "value": 0.23},
+                  {"name": "learns", "value": 0.91},
+                  ...
+                ]
+              }, …
+            ]
+          }, …
+        ]
         """
-
         if self.student_model is None:
             raise ValueError("Not trained model")
 
-        # parámetros en formato plano
+        # 1) extrae parámetros y filtra sólo default
         params = self.student_model.params().reset_index()
-
-        #  valores "default"
         params["class"] = params["class"].str.lower()
         default_df = params[params["class"] == "default"]
 
-        # 4) Pivot (skill × param → value)
+        # 2) Pivot (skill × param → value)
         wide = default_df.pivot(index="skill", columns="param", values="value")
-        # Asegura presencia de todas las columnas
         for col in ["prior", "learns", "guesses", "slips", "forgets"]:
             if col not in wide.columns:
                 wide[col] = float("nan")
 
-        # construir diccionario anidado subject → skill → métricas
-        out: Dict[str, Dict[str, SkillStates]] = defaultdict(dict)
-
+        # 3) agrupa en estructura subject → lista de skills
+        subject_map: DefaultDict[str, List[Dict]] = defaultdict(list)
         for skill, row in wide.iterrows():
             subj = skill_subject_map.get(skill, "UNKNOWN")
+            states = [
+                {"name": col, "value": float(row[col])}
+                for col in ["prior", "learns", "guesses", "slips", "forgets"]
+            ]
+            subject_map[subj].append({
+                "skill_name": skill,
+                "states": states
+            })
 
-            out[subj][skill] = {
-                "prior": float(row["prior"]),
-                "learns": float(row["learns"]),
-                "guesses": float(row["guesses"]),
-                "slips": float(row["slips"]),
-                "forgets": float(row["forgets"]),
-            }
-
-        return dict(out)  # convierte defaultdict en dict normal
+        # 4) construir lista de subjects
+        subject_list = [
+            {"subject_name": subj, "skill_list": skills}
+            for subj, skills in subject_map.items()
+        ]
+        return subject_list
+    
     
     def students_dataset_exists(self) -> DataResponse:
         """ Check if the student data exists in the repository.
