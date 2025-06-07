@@ -928,3 +928,53 @@ class StudentModel:
             message=f"Roaster files and configuration of user {user_id} deleted successfully."
         )
     
+    def get_student_state_roaster(self, user_id: str):
+        """Get the state of a student from the roaster.
+        
+        Args:
+            user_id (str): ID of the student.
+        
+        Returns:
+            dict: A dictionary with the state of the student in each skill.
+        """
+        logger = logging.getLogger("uvicorn.error")
+        try:
+            roster_config, _ = self.load_roaster_config()
+        except Exception as e:
+            logger.error(f"Error getting student state from roaster: {str(e)}")
+            return {"error": str(e)}
+        
+        if user_id not in roster_config:
+            logger.error(f"User {user_id} not found in roster config.")
+            raise ValueError(f"User {user_id} not found in roster config.")
+        skills = roster_config[user_id].get("skills", {})
+        if not skills:
+            logger.error(f"No skills found for user {user_id}.")
+            return {}
+        
+        # Iteramos sobre los path de los skills
+        for skill_path, skills_names in skills.items():
+            if not self.repository.file_exists(skill_path):
+                logger.error(f"Skill file {skill_path} not found.")
+                continue
+            
+            # Cargar el roster
+            roster_data = self.repository.get_file(skill_path)
+            try:
+                roster = pickle.loads(roster_data)
+            except Exception as e:
+                logger.error(f"Error loading roster: {e}")
+                continue
+            
+            # Obtener el estado del estudiante
+            student_state = {}
+            for skill_name in skills_names:
+                state = roster.get_state(skill_name, user_id)
+                if state:
+                    student_state[skill_name] = {
+                        "state": state.state_type.name,
+                        "correct_prob": state.current_state["correct_prediction"],
+                        "state_prob": state.current_state["state_prediction"]
+                    }
+            
+            return student_state 
