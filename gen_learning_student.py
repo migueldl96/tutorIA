@@ -49,13 +49,5 @@ def main():
     with open(dataset_path, "w") as f:
         json.dump(entries, f, indent=2)
     print(f"Dataset guardado en {dataset_path}")
-    import matplotlib.pyplot as plt
-    plt.figure(figsize=(10, 6))
-    plt.plot(hist, label='Histórico de órdenes')
-    plt.xlabel('Índice de orden')
-    plt.ylabel('Valor de la orden')
-    plt.title('Histórico de órdenes de estudiantes')
-    plt.legend()
-    plt.show()
 if __name__ == "__main__":
     main()
