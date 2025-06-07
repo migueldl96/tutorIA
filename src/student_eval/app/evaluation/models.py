@@ -363,12 +363,12 @@ class StudentModel:
             return {"students_states": None, "skills_states": None}
 
         # Skill in subject
-        skill_subject = {}
+        self.skill_subject = {}
         for skill in df["skill_name"].tolist():
-            skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
-        students_states = self.calculate_students_states(skill_subject)
+            self.skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
+        students_states = self.calculate_students_states()
 
-        skills_states = self.calculate_skills_states(skill_subject)
+        skills_states = self.calculate_skills_states()
 
         # TODO
         # Lógica para guardar el CSV
@@ -494,12 +494,12 @@ class StudentModel:
             return {"students_states": None, "skills_states": None}
 
         # Skill in subject
-        skill_subject = {}
+        self.skill_subject = {}
         for skill in df["skill_name"].tolist():
-            skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
-        students_states = self.calculate_students_states(skill_subject)
+            self.skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
+        students_states = self.calculate_students_states()
 
-        skills_states = self.calculate_skills_states(skill_subject)
+        skills_states = self.calculate_skills_states()
 
         # TODO
         # Lógica para guardar el CSV
@@ -611,12 +611,12 @@ class StudentModel:
             raise e
 
         # Skill in subject
-        skill_subject = {}
+        self.skill_subject = {}
         for skill in df["skill_name"].tolist():
-            skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
-        students_states = self.calculate_students_states(skill_subject)
+            self.skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
+        students_states = self.calculate_students_states()
 
-        skills_states = self.calculate_skills_states(skill_subject)
+        skills_states = self.calculate_skills_states()
 
         # Save the CSV in the repository
         csv_buffer = StringIO()
@@ -624,9 +624,24 @@ class StudentModel:
         self.repository.save_file(self.csv_path, csv_buffer.getvalue())
         return [{"students_states": students_states, "skills_states": skills_states}]
 
+    def get_model_status(self) -> List[Dict]:
+        """
+        Devuelve el estado del modelo y los datos de los estudiantes y habilidades.
+        """
+        if self.student_model is None:
+            raise ValueError("Not trained model")
+
+        students_states = self.calculate_students_states()
+        skills_states = self.calculate_skills_states()
+
+        return [{
+            "students_states": students_states,
+            "skills_states": skills_states
+        }]
+    
+    
     def calculate_students_states(
-        self,
-        skill_subject_map: Dict[str, str]
+        self
     ) -> List[Dict]:
         """
         Transformado para devolver una lista de objetos JSON:
@@ -662,7 +677,7 @@ class StudentModel:
             # dict: subject -> lista de skills
             subj_map: DefaultDict[str, List[Dict]] = defaultdict(list)
             for row in df_al.itertuples():
-                subj = skill_subject_map.get(row.skill, "UNKNOWN")
+                subj = self.skill_subject_map.get(row.skill, "UNKNOWN")
                 subj_map[subj].append({
                     "name": row.skill,
                     "learn": row.value
@@ -681,7 +696,7 @@ class StudentModel:
 
 
     def calculate_skills_states(
-        self, skill_subject_map: Dict[str, str]
+        self
     ) -> List[Dict]:
         """
         Transformado para devolver una lista de objetos JSON:
@@ -718,7 +733,7 @@ class StudentModel:
         # 3) agrupa en estructura subject → lista de skills
         subject_map: DefaultDict[str, List[Dict]] = defaultdict(list)
         for skill, row in wide.iterrows():
-            subj = skill_subject_map.get(skill, "UNKNOWN")
+            subj = self.skill_subject_map.get(skill, "UNKNOWN")
             states = [
                 {"name": col, "value": float(row[col])}
                 for col in ["prior", "learns", "guesses", "slips", "forgets"]

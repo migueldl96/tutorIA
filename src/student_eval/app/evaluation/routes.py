@@ -158,3 +158,11 @@ async def get_student_state_roaster(data: DeleteRoasterData):
         return results
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@router.post("/get_model_status")
+async def get_model_status(data: DeleteRoasterData):
+    try:
+        results = model.get_model_status()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
