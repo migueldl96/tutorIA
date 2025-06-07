@@ -622,7 +622,7 @@ class StudentModel:
         csv_buffer = StringIO()
         df.to_csv(csv_buffer, index=False)
         self.repository.save_file(self.csv_path, csv_buffer.getvalue())
-            return [{"students_states": students_states, "skills_states": skills_states}]
+        return [{"students_states": students_states, "skills_states": skills_states}]
 
     def calculate_students_states(
         self,
@@ -923,7 +923,7 @@ class StudentModel:
             for skill_name in skills_names:
                 state = roster.get_state(skill_name, user_id)
                 if state:
-                    student_state[skill_name] = {
+                    student_state_i[skill_name] = {
                         "state": state.state_type.name,
                         "correct_prob": state.current_state["correct_prediction"],
                         "state_prob": state.current_state["state_prediction"]
