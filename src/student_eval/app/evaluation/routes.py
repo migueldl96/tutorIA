@@ -107,7 +107,7 @@ async def real_time_evaluation(data: RealEvalData):
         )
         return results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/update_dataset_evaluation")
 async def update_dataset_evaluation(data: UpdateEvalData):
@@ -150,3 +150,11 @@ async def delete_roaster_files(data: DeleteRoasterData):
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/get_student_state_roaster")
+async def get_student_state_roaster(data: DeleteRoasterData):
+    try:
+        results = model.get_student_state_roaster(user_id=data.user_id)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -232,7 +232,7 @@ class StudentModel:
         # Comprobar que el archivo existe
         if not self.repository.file_exists(roster_path):
             logger.error(f"Roster file {roster_path} not found")
-            return {"state": None, "correct_prob": None, "state_prob": None}
+            raise FileNotFoundError(f"Roster file {roster_path} not found")
         # Cargar el roster
         roster_data = self.repository.get_file(roster_path)
         # Deserializar el objeto
@@ -240,7 +240,7 @@ class StudentModel:
             self.roster = pickle.loads(roster_data)
         except Exception as e:
             logger.error(f"Error loading roster: {e}")
-            return {"state": None, "correct_prob": None, "state_prob": None}
+            raise ValueError(f"Error loading roster: {e}")
 
 
         logger.info("Roster loaded successfully")
@@ -919,14 +919,16 @@ class StudentModel:
                 continue
             
             # Obtener el estado del estudiante
-            student_state = {}
+            student_state = []
             for skill_name in skills_names:
                 state = roster.get_state(skill_name, user_id)
                 if state:
-                    student_state_i[skill_name] = {
+                    student_state_i = {
+                        "skill_name": skill_name,
                         "state": state.state_type.name,
                         "correct_prob": state.current_state["correct_prediction"],
                         "state_prob": state.current_state["state_prediction"]
                     }
+                    student_state.append(student_state_i)
             
             return student_state 
