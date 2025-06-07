@@ -677,7 +677,7 @@ class StudentModel:
             # dict: subject -> lista de skills
             subj_map: DefaultDict[str, List[Dict]] = defaultdict(list)
             for row in df_al.itertuples():
-                subj = self.skill_subject_map.get(row.skill, "UNKNOWN")
+                subj = self.skill_subject.get(row.skill, "UNKNOWN")
                 subj_map[subj].append({
                     "name": row.skill,
                     "learn": row.value
@@ -733,7 +733,7 @@ class StudentModel:
         # 3) agrupa en estructura subject → lista de skills
         subject_map: DefaultDict[str, List[Dict]] = defaultdict(list)
         for skill, row in wide.iterrows():
-            subj = self.skill_subject_map.get(skill, "UNKNOWN")
+            subj = self.skill_subject.get(skill, "UNKNOWN")
             states = [
                 {"name": col, "value": float(row[col])}
                 for col in ["prior", "learns", "guesses", "slips", "forgets"]
