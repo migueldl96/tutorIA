@@ -633,10 +633,10 @@ class StudentModel:
         [
           {
             "id": alumno_id,
-            "subject_list": [
+            "student_subject_list": [
               {
                 "subject_name": asignatura,
-                "skill_list": [
+                "student_skill_list": [
                   {"name": habilidad, "learn": valor}, …
                 ]
               }, …
@@ -669,12 +669,12 @@ class StudentModel:
                 })
             # construye lista de subjects
             subject_list = [
-                {"subject_name": subj, "skill_list": skills}
+                {"subject_name": subj, "student_skill_list": skills}
                 for subj, skills in subj_map.items()
             ]
             student_states.append({
                 "id": alumno,
-                "subject_list": subject_list
+                "student_subject_list": subject_list
             })
 
         return student_states
@@ -688,7 +688,7 @@ class StudentModel:
         [
           {
             "subject_name": asignatura,
-            "skill_list": [
+            "subject_skill_list": [
               {
                 "skill_name": habilidad,
                 "states": [
@@ -724,13 +724,13 @@ class StudentModel:
                 for col in ["prior", "learns", "guesses", "slips", "forgets"]
             ]
             subject_map[subj].append({
-                "skill_name": skill,
+                "subject_skill_name": skill,
                 "states": states
             })
 
         # 4) construir lista de subjects
         subject_list = [
-            {"subject_name": subj, "skill_list": skills}
+            {"skill_name": subj, "subject_skill_list": skills}
             for subj, skills in subject_map.items()
         ]
         return subject_list
