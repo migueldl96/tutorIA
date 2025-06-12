@@ -13,24 +13,24 @@ Tres astros 🌠 se han alineado para que TutorIA sea una (semi) realidad:
 <table>
   <tr>
     <td align="center">
-      <img src="./doc/img/javi.jpg" width="120" style="border-radius: 50%"><br>
+      <img src="./doc/img/javi.jpg" width="120" style="border-radius: 100px;"><br>
       <strong>Javier Alvarez</strong><br>
       🧠 .NET Developer<br>
-🔗 <a href="https://www.linkedin.com/in/javier-%C3%A1lvarez-cuevas-1771ba19b/">LinkedIn</a>
+🔗 <a href="https://www.linkedin.com/in/javier-%C3%A1lvarez-cuevas-1771ba19b/">LinkedIn</a><br>
       <em>"Mi compás hace cuadrados"</em>
     </td>
     <td align="center">
-      <img src="./doc/img/olmo.jpg" width="120" style="border-radius: 50%"><br>
+      <img src="./doc/img/olmo.jpg" width="120" style="border-radius: 100px;"><br>
       <strong>Olmo Arquero</strong><br>
       💻 Data Scientist<br>
-🔗 <a href="https://www.linkedin.com/in/olmo-arquero-peinazo-4a78912ba/">LinkedIn</a>
+🔗 <a href="https://www.linkedin.com/in/olmo-arquero-peinazo-4a78912ba/">LinkedIn</a><br>
       <em>"Lalala"</em>
     </td>
     <td align="center">
-      <img src="./doc/img/miguel.jpg"" width="120" style="border-radius: 50%"><br>
+      <img src="./doc/img/miguel.jpg"" width="120" style="border-radius: 100px;"><br>
       <strong>Miguel Díaz</strong><br>
       📐 IA Engineer<br>
-	        🔗 <a href="https://www.linkedin.com/in/migueldiazlozano/">LinkedIn</a> · 🌐 <a href="https://miguel.diazlozano.com/">Web</a>
+	        🔗 <a href="https://www.linkedin.com/in/migueldiazlozano/">LinkedIn</a> · 🌐 <a href="https://miguel.diazlozano.com/">Web</a><br>
       <em>"Ctrl+Z es mi religión"</em>
     </td>
   </tr>
