@@ -1,42 +1,285 @@
-# tutorIA (provisional)
+# TutorIA
 
-⚠️ **Este proyecto está en una fase inicial de exploración y todo su contenido es tentativo.**
+Este proyecto nace a raíz de la competición [Reboots 2025](https://www.atmira.com/reboots/ "Reboots") llevada a cabo por Atmira.
+
+<img src="https://i.ibb.co/wFdCb2LR/Captura-de-pantalla-2025-06-12-a-las-18-05-51.png" width="50%" style="margin: auto; display:block" />
+
+
+---
+
+Tres astros 🌠 se han alineado para que TutorIA sea una (semi) realidad:
+
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://media.licdn.com/dms/image/v2/D4D03AQHLAyrU6q_wkw/profile-displayphoto-shrink_200_200/B4DZN3E7NMHQAY-/0/1732869600533?e=1755129600&v=beta&t=VfMb5yMwGYB27PPXPu3-w3z6GeM6W9CbfqtiOTUT0js" width="120" style="border-radius: 50%"><br>
+      <strong>Javier Alvarez</strong><br>
+      🧠 .NET Developer<br>
+🔗 <a href="https://www.linkedin.com/in/javier-%C3%A1lvarez-cuevas-1771ba19b/">LinkedIn</a>
+      <em>"Mi compás hace cuadrados"</em>
+
+    </td>
+    <td align="center">
+      <img src="https://media.licdn.com/dms/image/v2/D4E03AQF5CpURSniYbA/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1710776005883?e=1755129600&v=beta&t=uQCs717bmy8BGklPjj7Rgi-v8c8hOMlEsz_waBnb_e0" width="120" style="border-radius: 50%"><br>
+      <strong>Olmo Arquero</strong><br>
+      💻 Data Scientist<br>
+🔗 <a href="https://www.linkedin.com/in/olmo-arquero-peinazo-4a78912ba/">LinkedIn</a>
+      <em>"Lalala"</em>
+    </td>
+    <td align="center">
+      <img src="https://media.licdn.com/dms/image/v2/C4E03AQHMrL5tPoX9yQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1650111956462?e=1755129600&v=beta&t=xvBJchPh-TTlXc3Obekm4DUxo-wHtUsMptVGMQceCws" width="120" style="border-radius: 50%"><br>
+      <strong>Miguel Díaz</strong><br>
+      📐 IA Engineer<br>
+	        🔗 <a href="https://www.linkedin.com/in/migueldiazlozano/">LinkedIn</a> · 🌐 <a href="https://miguel.diazlozano.com/">Web</a>
+      <em>"Ctrl+Z es mi religión"</em>
+    </td>
+  </tr>
+</table>
+
+---
+
+> 🤖 *"La IA no nos va a reemplazar, pero seguro que nos echa una mano para entregar a tiempo."*
+
+
 
 ## 🧠 Descripción general
 
-`tutorIA` es un proyecto experimental que busca desarrollar un sistema inteligente para **evaluar el estado de aprendizaje de un alumno** universitario y generar un **itinerario formativo personalizado** (learning path), en función de lo que el alumno sabe o no sabe sobre los conocimientos previos necesarios para acceder a una nueva asignatura.
+`TutorIA` es un proyecto experimental que busca desarrollar un sistema inteligente para **evaluar el estado de aprendizaje de un alumno** universitario y generar un **itinerario formativo personalizado** (*learning path*), en función de lo que el alumno sabe o no sabe sobre los conocimientos previos necesarios para acceder a una nueva asignatura. Para ello se aplican técnicas de IA tradicional, encargadas de modelar el conocimiento de un alumno mediante modelos paramétricos, e IA generativa encargada de generar pruebas y contenido a medida para el alumno en función de sus necesidades.
 
-## 📊 Evaluación del conocimiento
+### 📊 Evaluación del conocimiento
 
-Se utilizarán **test estadísticos** (por definir) para determinar el nivel de conocimiento previo del alumno respecto a una asignatura objetivo. Esta evaluación servirá como punto de partida para adaptar la experiencia de aprendizaje.
+Para estimar el nivel de conocimiento previo del alumno sobre una asignatura objetivo, `TutorIA` emplea un enfoque basado en **Bayesian Knowledge Tracing (BKT)**. Este modelo probabilístico permite rastrear el dominio de un conjunto de habilidades o conceptos por parte del alumno, a partir de sus respuestas a preguntas relacionadas.
 
-## 📚 Generación del itinerario adaptado
+BKT asume que cada concepto puede estar **aprendido o no aprendido**, y actualiza la probabilidad de que un alumno haya aprendido dicho concepto tras cada interacción (por ejemplo, una respuesta correcta o incorrecta). El sistema se basa en cuatro parámetros clave:
 
-Una vez evaluado, el sistema construirá un **learning path personalizado** utilizando contenidos ya existentes creados por el profesorado (presentaciones, PDFs, cursos, etc.). Este proceso se apoyará en técnicas de **RAG (Retrieval-Augmented Generation)** mediante IA.
+- **P(L₀)**: Probabilidad inicial de que el alumno conozca el concepto.
+- **P(T)**: Probabilidad de que el alumno aprenda el concepto después de una oportunidad de práctica.
+- **P(G)**: Probabilidad de que el alumno adivine correctamente sin conocer el concepto.
+- **P(S)**: Probabilidad de que el alumno falle a pesar de conocer el concepto (desliz).
 
-## 🧩 Contenidos y módulos
+Este modelo permite construir un **perfil dinámico de conocimiento** que evoluciona en función de las respuestas del alumno, y que servirá como base para generar itinerarios formativos personalizados y adaptativos.
 
-El contenido generado se organizará en **módulos de aprendizaje**, que podrán adoptar múltiples formatos:
-- Cuestionarios tipo Moodle
-- Actividades interactivas
-- Problemas guiados
-- Otros formatos didácticos
 
-## 🧪 Tecnologías previstas
+### 📚 Generación del itinerario adaptado
 
-Este es un listado inicial y provisional de tecnologías a utilizar:
+Una vez evaluado el nivel de conocimientos del alumno mediante el modelo BKT, `TutorIA` genera un **itinerario formativo personalizado** (*learning path*) que tiene en cuenta sus fortalezas y debilidades en las distintas habilidades evaluadas.
 
-- Python
-- Docker
-- Azure OpenAI
-- Azure AI Search
-- .NET
+El contenido del itinerario no se genera desde cero, sino que se construye a partir de **materiales creados previamente por el profesorado** (como presentaciones, PDFs, cursos o ejercicios). Este enfoque permite mantener la coherencia con los objetivos docentes de la asignatura. Para seleccionar y adaptar estos recursos, se emplea un enfoque de **RAG (Retrieval-Augmented Generation)**, combinando recuperación de documentos relevantes con generación de explicaciones o preguntas adaptadas al nivel del alumno.
 
-## ⚠️ Estado del proyecto
+> 🎛️ El profesorado tiene control indirecto sobre el contenido del itinerario, ya que puede **seleccionar, filtrar o excluir** recursos disponibles, asegurando así la calidad y pertinencia del material utilizado por la IA.
 
-Este repositorio está en **fase de diseño y prototipado temprano**. Toda la funcionalidad, diseño y arquitectura están **sujetos a cambios**. La documentación y el código reflejan únicamente un trabajo exploratorio inicial.
+Durante el proceso, el alumno recibe:
 
-## Usar repositorio
+- **Feedback explicativo** sobre sus respuestas, extraído o sintetizado a partir del contenido proporcionado por los docentes.
+- **Referencias directas** a los documentos más relevantes que debe consultar para reforzar conceptos específicos.
+- **Recomendaciones personalizadas** para avanzar progresivamente hacia los prerrequisitos de la asignatura objetivo.
+
+Al finalizar el recorrido o la nueva fase de evaluación, se vuelve a invocar el modelo **BKT** para **actualizar el estado de conocimiento del alumno**, manteniendo el sistema en constante adaptación.
+
+
+### 🌀 Flujo típico
+
+A continuación se muestra un ejemplo de cómo un alumno interactúa con `TutorIA` para prepararse de forma personalizada antes de cursar una nueva asignatura:
+
+---
+
+#### 🎓 Caso: Clara quiere prepararse para la asignatura "Álgebra Lineal"
+
+1. **Selección de asignatura objetivo**
+   - Clara accede a la plataforma y selecciona *Álgebra Lineal* como la asignatura que quiere preparar.
+
+2. **Evaluación inicial**
+   - El sistema presenta a Clara un conjunto de preguntas diagnósticas adaptadas a las habilidades previas necesarias (matrices, operaciones básicas, sistemas de ecuaciones, etc.).
+   - Sus respuestas son analizadas mediante el modelo **Bayesian Knowledge Tracing (BKT)** para estimar su nivel actual en cada skill evaluada.
+
+3. **Generación del itinerario personalizado**
+   - A partir del diagnóstico, el sistema construye un *learning path* personalizado usando material validado y seleccionado por el profesorado.
+   - Clara recibe actividades específicas para reforzar conceptos que aún no domina, junto con explicaciones adaptadas mediante **RAG (Retrieval-Augmented Generation)**.
+   - Cada explicación incluye:
+     - Feedback sobre su error o acierto
+     - Enlaces a recursos recomendados (PDFs, vídeos, diapositivas del curso, etc.)
+
+4. **Progreso y re-evaluación**
+   - Tras completar varias actividades, el modelo BKT se actualiza y refleja el nuevo estado de conocimiento de Clara.
+   - En función de su progreso, el sistema adapta o expande el itinerario formativo.
+
+---
+
+> ✅ Este flujo garantiza un aprendizaje adaptado, trazable y centrado en el alumno, con el respaldo y supervisión indirecta del profesorado.
+
+
+# 🧪 Pero, todo esto es *invent*, ¿no?
+
+¡Qué va! No es magia, es ***CENCIA***.  
+Aquí te contamos cómo se cocina `TutorIA` por dentro: qué tecnologías usamos, por qué las elegimos y cómo se conectan entre sí. ¡Con cafelito en mano, claro! ☕
+
+
+## 🛠️ Tecnologías utilizadas
+
+`TutorIA` combina distintas tecnologías modernas para construir un sistema robusto, escalable y fácil de mantener. A continuación, te explicamos cada una:
+
+- 🧠 **Azure OpenAI**
+  - Utilizado para los modelos de lenguaje (IA generativa) que generan, explican, y adaptan el contenido educativo.
+  - **Motivación**: Facilidad de integración, cumplimiento de requisitos éticos y legales, y opciones avanzadas de privacidad.
+
+- 🔍 **Azure AI Search**
+  - Se encarga de recuperar los recursos más relevantes en el proceso de generación aumentada por recuperación (RAG).
+  - **Motivación**: Alta precisión en búsquedas semánticas sobre documentos educativos.
+
+- 🗂️ **Azure Blob Storage**
+  - Almacena el repositorio documental del profesorado: PDFs, presentaciones, guías, etc.
+  - **Motivación**: Escalabilidad y fácil integración con Azure Search para el pipeline RAG.
+
+- 🧪 **Python**
+  - Lenguaje principal para los módulos de evaluación del conocimiento (BKT) y generación adaptativa de contenido.
+  - **Motivación**: Ecosistema rico en librerías educativas, científicas y de IA (***long live Langchain!***).
+
+- 🔄 **Azure Functions**
+  - Microservicios serverless que encapsulan la lógica de negocio del sistema (evaluación, planificación, feedback...).
+  - **Motivación**: Permite escalar bajo demanda y reducir costes en producción.
+
+- 📦 **Docker**
+  - Contenerización de los módulos para facilitar despliegues locales, en la nube o entornos mixtos.
+  - **Motivación**: Portabilidad, pruebas consistentes y enfoque cloud-agnostic.
+
+- 💻 **.NET**
+  - Framework utilizado para desarrollar la interfaz web del alumno y del docente.
+  - **Motivación**: Buen rendimiento, madurez del ecosistema y compatibilidad con entornos empresariales.
+
+---
+
+> ⚙️ Todas estas piezas se orquestan pensando en:
+> - **Escalabilidad**: poder adaptarse a grandes volúmenes de alumnos.
+> - **Privacidad**: garantizar la seguridad de datos sensibles y educativos.
+> - **Portabilidad**: permitir despliegue en diferentes nubes o entornos locales según necesidad.
+
+## Menos listas y más imágenes
+Sí, nosotros tambien somos de esos. Vamos al lío.
+
+### 🧪 Evaluación inicial
+
+Cuando el alumno accede por primera vez a `TutorIA`, lo hace a través de una aplicación web desplegada en un **Azure App Service**. Allí se le invita a realizar una **evaluación diagnóstica**, diseñada para conocer su nivel actual en los conocimientos previos necesarios para una asignatura objetivo.
+
+Esta evaluación no es un examen más: es una serie de preguntas generadas y organizadas para **modelar su conocimiento en términos de maestría**, es decir, identificar qué sabe, qué no, y qué tan cerca está de dominar cada skill. Detrás del telón, esto lo gestiona una **Azure Function App**, que ejecuta la lógica del modelo **BKT (Bayesian Knowledge Tracing)** para ir actualizando en tiempo real el perfil de conocimiento del alumno.
+
+Toda esta maquinaria se apoya en una **Azure Storage Account**, que guarda los modelos preentrenados, los bancos de preguntas y los datos intermedios generados durante la prueba. Una vez completada la evaluación, los resultados se **persisten en una base de datos relacional en Azure SQL Server**, para que el sistema pueda consultarlos más adelante y generar el itinerario formativo adaptado.
+
+---
+
+#### 🧩 ¿Y todo esto cómo se ve?
+
+Sí, sí… mucha teoría, pero ¿cómo se conecta todo esto por detrás?  
+Aquí te dejamos un esquemita para entender mejor cómo fluye la información en esta fase inicial:
+
+<img src="https://i.ibb.co/zTN68RZp/Whats-App-Image-2025-05-26-at-14-25-19.jpg" alt="Diagrama Evaluación Inicial" />
+
+> ☝️ *Spoiler: sí, hay muchas flechas, pero cada una tiene su razón de ser.*
+
+### 📚 Generación del itinerario adaptado
+
+Vale, ya sabemos lo que el alumno domina y lo que no… ¿y ahora qué?  
+Pues ahora empieza la parte divertida: la generación dinámica del **learning path personalizado**, ajustado en tiempo real a sus necesidades concretas.
+
+El alumno puede acceder a la plataforma en cualquier momento y solicitar una **nueva prueba personalizada**. ¿Quién la crea? Una **Azure Function App**, claro. Esta función es la que contiene la lógica mágica (bueno, más bien IA científica) que decide qué preguntas lanzar, en qué orden, y con qué grado de dificultad.
+
+Este proceso no ocurre en el vacío: la generación se basa en dos pilares fundamentales:
+
+- 📄 **Extracción de información de plataformas**: Pipelines de ETL extraen el contenido de las principales plataformas educativas utilizadas cada cierto tiempo. Esto habilita integración directa de TutorIA sin causar fricción con sistemas existentes.
+- 📂 **Recuperación de información contextual**: gracias a **Azure AI Search**, el sistema identifica qué recursos del repositorio del profesorado (almacenado en Azure Blob Storage) son más relevantes para las habilidades que el alumno necesita reforzar.
+- 🧠 **Modelos de lenguaje (LLMs)**: una vez recuperado el contexto, los modelos de **Azure OpenAI** se encargan de generar preguntas adaptadas, explicaciones a medida y feedback inteligente.
+
+> 🧑‍🏫 Todo este proceso está **alimentado exclusivamente por materiales creados y aprobados por el profesorado**. Esto permite al docente tener **control indirecto** sobre el contenido que se presenta al alumno, seleccionando qué documentos son visibles para la IA generativa y cuáles no.
+
+Durante la interacción, el sistema sigue evaluando al alumno de forma continua. Cada respuesta contribuye a actualizar su perfil en tiempo real a través del modelo BKT. Esto permite adaptar no solo el contenido, sino también la progresión, el ritmo y las recomendaciones futuras.
+
+---
+
+### 🧩 ¿Y esto cómo se conecta?
+
+Aquí te dejamos otro diagrama bonito (sí, nos gustan los diagramas) que muestra cómo fluye todo este tinglado:
+
+<img src="https://i.ibb.co/LmcbMkq/Whats-App-Image-2025-05-26-at-14-25-23.jpg" alt="Diagrama Generación de Contenido Adaptado" />
+
+> 🤖 *Detrás de cada pregunta adaptativa hay IA, pero también mucho trabajo docente que la respalda.*
+
+## 🚀 ¿Y esto lo puedo probar?
+
+¡Claro que sí! Como diría Goyo Jiménez: **"No lo digo... ¡lo hago!"**  
+Queremos que puedas cacharrear con `TutorIA`, así que te lo hemos puesto fácil para que lo despliegues en local.
+
+---
+
+### 🖥️ Despliegue en local
+
+Hemos preparado un archivo `.env.template` con todas las variables que necesitas configurar para que el sistema funcione correctamente en tu máquina.  
+Y sí, lo sabemos, **no hay pipeline de despliegue automática aún**... pero confiamos en tu comprensión. Además, piensa que el diseñador del frontal de Azure también tiene que comer.
+
+A continuación, te explicamos qué significa cada variable y cómo agruparlas para que no te pierdas. Rellena el archivo `.env.template` como te indicamos y renombralo a` .env`.
+
+---
+
+#### 🗂️ Variables de almacenamiento
+
+Estas variables definen cómo se accede a tus recursos en Azure Blob Storage y dónde se encuentran los archivos de evaluación y modelos. Las rutas puedes definirlas como quieras.
+
+```env
+AZURE_STORAGE_CONNECTION_STRING=        # Cadena de conexión a tu cuenta de Azure Storage
+
+CSV_PATH=                               # Ruta base a los archivos CSV de habilidades y recursos
+EVALUATION_CSV_PATH_NON_TRAINED=        # CSV con resultados de evaluaciones iniciales (antes del entrenamiento)
+EVALUATION_CSV_PATH_TRAINED=            # CSV con resultados tras pruebas adaptadas (ya entrenado)
+EVALUATION_PATH=                        # Carpeta donde se almacenan los datos de sesiones de evaluación
+MODEL_PATH=                             # Ruta a los modelos BKT persistidos
+```
+#### 🤖  Variables de Azure OpenAI
+
+Estas variables permiten conectar con los servicios de IA generativa que usamos para crear contenido adaptado, preguntas y feedback:
+```env
+AZURE_OPENAI_API_KEY=                   # Clave de autenticación para Azure OpenAI
+AZURE_OPENAI_ENDPOINT=                 # URL de tu instancia de Azure OpenAI
+AZURE_OPENAI_API_VERSION=              # Versión de la API que estás utilizando
+
+AZURE_OPENAI_DEPLOYMENT_NAME=          # Nombre del despliegue del modelo LLM principal (p.ej., GPT-4)
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME=# Nombre del despliegue del modelo de embeddings
+```
+
+#### 🔍 Variables de Azure AI Search
+
+Estas variables configuran el motor de búsqueda semántica que permite recuperar recursos relevantes para el alumno:
+
+```env
+AZURE_SEARCH_ENDPOINT=                 # URL de tu instancia de Azure Cognitive Search
+AZURE_SEARCH_KEY=                      # Clave de acceso para consultas a Azure Search
+```
+
+#### 🚀 Despliegue
+
+Como te decíamos antes, toda la filosofía de desarrollo de `TutorIA` gira en torno a **Docker**.  
+Queremos que puedas levantar todo el sistema sin dramas, así que hemos preparado un `docker-compose.yml` que se encarga de montar todo el tinglado por ti.
+
+Sí, es cierto, **necesitas tener Docker instalado**. Pero tranqui, que si estás en un sistema UNIX y confías en nosotros, puedes copiar y pegar este script en tu terminal para dejarlo todo listo:
+
+```bash
+sudo -v
+sudo apt-get -y install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" |  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get -y update
+sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker $USER
+exec su -l $USER
+```
+
+¡Y Listo! Dirígete al directorio /src y haz docker compose up. Toda la maquinaría está engrasada y funcionando!
+
+## Bonus track: Notebooks
+Sí, esto es para ti, que has llegado hasta aquí. Para el mas freak, el que quiere saberlo todo, el más curioso. Tenemos preparados algunos notebooks para que te metas en las tripas de TutorIA, para que intentes entender cual ha sido el proceso de razonamiento que hemos seguido en aspectos algo más técnicos... vamos, café para muy cafeteros.
+
+### 
+
 ### Requisitos:
 - Anaconda (o miniconda)
 - Compiladores de C (gcc y g++)
@@ -59,3 +302,4 @@ uvicorn src.student_eval.app.main:app --reload
 ### Probar archivo Guía_rápida.ipynb
 ---
 
+g
