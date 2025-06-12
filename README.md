@@ -2,8 +2,7 @@
 
 Este proyecto nace a raíz de la competición [Reboots 2025](https://www.atmira.com/reboots/ "Reboots") llevada a cabo por Atmira.
 
-<img src="./doc/img/logo.png" width="50%" style="margin: auto; display:block" />
-
+![Logo](./doc/img/logo.png.svg){ width="50%" style="display: block; margin: 0 auto" }
 
 ---
 
