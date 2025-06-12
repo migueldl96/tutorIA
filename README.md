@@ -2,7 +2,7 @@
 
 Este proyecto nace a raíz de la competición [Reboots 2025](https://www.atmira.com/reboots/ "Reboots") llevada a cabo por Atmira.
 
-<img src="https://i.ibb.co/wFdCb2LR/Captura-de-pantalla-2025-06-12-a-las-18-05-51.png" width="50%" style="margin: auto; display:block" />
+<img src="./doc/img/logo.png" width="50%" style="margin: auto; display:block" />
 
 
 ---
@@ -13,22 +13,21 @@ Tres astros 🌠 se han alineado para que TutorIA sea una (semi) realidad:
 <table>
   <tr>
     <td align="center">
-      <img src="https://media.licdn.com/dms/image/v2/D4D03AQHLAyrU6q_wkw/profile-displayphoto-shrink_200_200/B4DZN3E7NMHQAY-/0/1732869600533?e=1755129600&v=beta&t=VfMb5yMwGYB27PPXPu3-w3z6GeM6W9CbfqtiOTUT0js" width="120" style="border-radius: 50%"><br>
+      <img src="./doc/img/javi.jpg" width="120" style="border-radius: 50%"><br>
       <strong>Javier Alvarez</strong><br>
       🧠 .NET Developer<br>
 🔗 <a href="https://www.linkedin.com/in/javier-%C3%A1lvarez-cuevas-1771ba19b/">LinkedIn</a>
       <em>"Mi compás hace cuadrados"</em>
-
     </td>
     <td align="center">
-      <img src="https://media.licdn.com/dms/image/v2/D4E03AQF5CpURSniYbA/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1710776005883?e=1755129600&v=beta&t=uQCs717bmy8BGklPjj7Rgi-v8c8hOMlEsz_waBnb_e0" width="120" style="border-radius: 50%"><br>
+      <img src="./doc/img/olmo.jpg" width="120" style="border-radius: 50%"><br>
       <strong>Olmo Arquero</strong><br>
       💻 Data Scientist<br>
 🔗 <a href="https://www.linkedin.com/in/olmo-arquero-peinazo-4a78912ba/">LinkedIn</a>
       <em>"Lalala"</em>
     </td>
     <td align="center">
-      <img src="https://media.licdn.com/dms/image/v2/C4E03AQHMrL5tPoX9yQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1650111956462?e=1755129600&v=beta&t=xvBJchPh-TTlXc3Obekm4DUxo-wHtUsMptVGMQceCws" width="120" style="border-radius: 50%"><br>
+      <img src="./doc/img/miguel.jpg"" width="120" style="border-radius: 50%"><br>
       <strong>Miguel Díaz</strong><br>
       📐 IA Engineer<br>
 	        🔗 <a href="https://www.linkedin.com/in/migueldiazlozano/">LinkedIn</a> · 🌐 <a href="https://miguel.diazlozano.com/">Web</a>
@@ -172,7 +171,7 @@ Toda esta maquinaria se apoya en una **Azure Storage Account**, que guarda los m
 Sí, sí… mucha teoría, pero ¿cómo se conecta todo esto por detrás?  
 Aquí te dejamos un esquemita para entender mejor cómo fluye la información en esta fase inicial:
 
-<img src="https://i.ibb.co/zTN68RZp/Whats-App-Image-2025-05-26-at-14-25-19.jpg" alt="Diagrama Evaluación Inicial" />
+<img src="./doc/img/d1.jpeg" alt="Diagrama Evaluación Inicial" />
 
 > ☝️ *Spoiler: sí, hay muchas flechas, pero cada una tiene su razón de ser.*
 
@@ -199,7 +198,7 @@ Durante la interacción, el sistema sigue evaluando al alumno de forma continua.
 
 Aquí te dejamos otro diagrama bonito (sí, nos gustan los diagramas) que muestra cómo fluye todo este tinglado:
 
-<img src="https://i.ibb.co/LmcbMkq/Whats-App-Image-2025-05-26-at-14-25-23.jpg" alt="Diagrama Generación de Contenido Adaptado" />
+<img src="./doc/img/d2.jpeg" alt="Diagrama Generación de Contenido Adaptado" />
 
 > 🤖 *Detrás de cada pregunta adaptativa hay IA, pero también mucho trabajo docente que la respalda.*
 
