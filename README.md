@@ -275,12 +275,63 @@ exec su -l $USER
 
 ¡Y Listo! Dirígete al directorio /src y haz docker compose up. Toda la maquinaría está engrasada y funcionando!
 
-## Bonus track: Notebooks
-Sí, esto es para ti, que has llegado hasta aquí. Para el mas freak, el que quiere saberlo todo, el más curioso. Tenemos preparados algunos notebooks para que te metas en las tripas de TutorIA, para que intentes entender cual ha sido el proceso de razonamiento que hemos seguido en aspectos algo más técnicos... vamos, café para muy cafeteros.
+## ☕ Bonus track: Notebooks
 
-### 
+Sí, esto es para ti. Para el más freak, el que quiere entenderlo *TODO*, el que no se conforma con pulsar "run" y ya.  
+Si has llegado hasta aquí, mereces abrir el capó de `TutorIA` y ver cómo funcionan sus engranajes por dentro.
 
-### Requisitos:
+Hemos preparado un par de notebooks para que explores los aspectos más técnicos del proyecto: desde la preparación de documentos hasta el modelado del conocimiento o la evaluación adaptativa. Es nuestra forma de contarte el *"por qué"* detrás del *"cómo"*.
+
+Vamos, esto es café para muy cafeteros ☕.  
+Puedes encontrarlos todos en el directorio `notebooks`
+
+
+
+### 📄 Notebook sobre preparación de documentos e indexación
+
+Este notebook es el **corazón del proceso de carga e indexación documental** de `TutorIA`. Si quieres entender cómo pasamos de un PDF plano a una búsqueda semántica optimizada en Azure AI Search, este es tu sitio.
+
+---
+
+#### ⚙️ Funcionalidades principales
+
+Este cuaderno implementa un pipeline completo para:
+
+- 🧠 **Extraer texto de documentos educativos en PDF**, usando `PyMuPDF (fitz)`
+- 🗂️ **Leer metadatos desde archivos `.yaml`** asociados a cada documento (temática, dificultad, habilidades)
+- ✂️ **Segmentar el contenido** con `LangChain`, dividiendo el texto en chunks con sentido pedagógico
+- 🧬 **Generar embeddings** usando Azure OpenAI (modelo de embeddings) para permitir búsquedas semánticas
+- 🔎 **Indexar automáticamente en Azure AI Search**, creando un esquema vectorial optimizado para recuperación contextual
+- 📦 **Procesar por lotes**, lo que permite cargar grandes volúmenes de documentos de forma eficiente
+- 🧪 **Validar el índice**, con herramientas de test integradas para asegurar que todo funciona como debe
+
+---
+
+#### 🔁 Flujo de trabajo
+
+1. 📂 Lee todos los PDFs desde el directorio `temas_por_secciones`
+2. 🧾 Extrae automáticamente los metadatos de capítulos y páginas desde sus correspondientes archivos `.yaml`
+3. 📊 Divide el contenido en chunks manejables con LangChain, conservando el contexto
+4. 🧠 Genera los embeddings de cada chunk mediante Azure OpenAI
+5. 📤 Indexa el contenido en Azure AI Search (esquema híbrido: texto + vectores)
+6. 💾 Almacena los resultados localmente en formato JSON por si quieres revisarlos o reutilizarlos
+
+---
+
+#### 🎯 ¿Qué lo hace especial?
+
+- El sistema **mantiene trazabilidad completa**: cada chunk tiene asociado su capítulo, página, tema y habilidades implicadas.
+- Los metadatos enriquecen el índice: permiten filtrar, agrupar y ajustar resultados en función del nivel del alumno.
+- Se puede **reindexar fácilmente**: ideal si actualizas un documento o cambias los criterios de segmentación.
+- Incluye su propio `requirements.txt` para que lo ejecutes sin complicaciones en tu entorno virtual.
+
+---
+
+> 🧪 *Este notebook es ideal si quieres experimentar con tus propios materiales educativos y subirlos a tu instancia de Azure Search. ¡Hazlo tuyo!*
+
+---
+
+### Notebook sobre modelado BKT
 - Anaconda (o miniconda)
 - Compiladores de C (gcc y g++)
 ### Instalamos gcc y g++
@@ -302,4 +353,31 @@ uvicorn src.student_eval.app.main:app --reload
 ### Probar archivo Guía_rápida.ipynb
 ---
 
-g
+#🤔 What the FAQ
+###🧠 ¿Cómo sabe TutorIA lo que sé y lo que no sé?
+
+Utilizamos un modelo probabilístico llamado Bayesian Knowledge Tracing (BKT). Este modelo evalúa tus respuestas a preguntas clave y estima, con cada nueva interacción, la probabilidad de que domines cada habilidad necesaria para la asignatura objetivo.
+###🤖 ¿Las preguntas las genera una IA o son de profes?
+
+Las dos cosas. Las preguntas se generan automáticamente usando IA generativa (Azure OpenAI), pero siempre basándose en materiales proporcionados por el profesorado. Así garantizamos que el contenido esté alineado con la asignatura y sus objetivos docentes.
+###🧑‍🏫 ¿El profesorado puede controlar lo que ve la IA?
+
+Sí. El profesorado puede seleccionar, excluir o validar los documentos que se usarán como base para la generación de contenido. De esta forma, la IA sólo trabaja con lo que el docente considera adecuado.
+###🔒 ¿Mis datos están seguros?
+
+Totalmente. TutorIA está construido sobre servicios de Azure, que cumple con altos estándares de privacidad y protección de datos. Además, el diseño del sistema minimiza la exposición de información sensible mediante buenas prácticas de seguridad.
+###📚 ¿Y si cambio de asignatura? ¿Tengo que volver a empezar?
+
+No necesariamente. El perfil de conocimiento del alumno se acumula y actualiza. Si varias asignaturas comparten habilidades previas, esas ya evaluadas se reutilizan para evitar redundancias. Aprende una vez, úsalo muchas veces.
+###🧩 ¿Qué pasa si la IA se equivoca?
+
+La IA genera sugerencias, pero el sistema no se basa únicamente en respuestas correctas o incorrectas, sino en probabilidades. Además, cada interacción se valida con contenido aprobado y el usuario siempre tiene acceso a recursos para contrastar la información.
+###📈 ¿Puedo ver mi progreso?
+
+Sí. El sistema guarda el histórico de evaluaciones y avances, permitiéndote revisar qué habilidades ya dominas y cuáles siguen pendientes. Así puedes planificar mejor tu aprendizaje antes de entrar en una asignatura.
+###🚀 ¿Esto está en producción?
+
+Aún no. TutorIA es un prototipo funcional en desarrollo como parte de la competición Reboots 2025. Pero muchas de sus piezas ya funcionan y están listas para integrarse en entornos reales.
+
+### 🌳 ¿Olmo de verdad se llama Olmo?
+Sí sí, de verdad.
