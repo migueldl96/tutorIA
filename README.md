@@ -37,5 +37,27 @@ Este es un listado inicial y provisional de tecnologías a utilizar:
 
 Este repositorio está en **fase de diseño y prototipado temprano**. Toda la funcionalidad, diseño y arquitectura están **sujetos a cambios**. La documentación y el código reflejan únicamente un trabajo exploratorio inicial.
 
+## Usar repositorio
+### Requisitos:
+- Anaconda (o miniconda)
+- Compiladores de C (gcc y g++)
+### Instalamos gcc y g++
+```bash
+sudo apt-get install build-essential
+```
+### Instalar miniconda
+### Configuración de entorno
+Importamos el entorno desde el archivo 'environment.yml' con el siguiente comando:
+```bash
+conda env create -f environment.yml
+```
+### Activar entorno
+```bash
+conda activate tutorIA
+```
+### Lanzar servidor
+uvicorn src.student_eval.app.main:app --reload
+
+### Probar archivo Notebooks_BKT/Guía_rápida.ipynb
 ---
 
