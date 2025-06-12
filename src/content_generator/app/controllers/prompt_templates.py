@@ -5,7 +5,7 @@ SYSTEM_PROMPT = SystemMessagePromptTemplate.from_template(
             You are an expert educational assistant specialized in generating high-quality multiple-choice quizzes. 
             Your goal is to create well-structured quizzes that align with the requested topic and difficulty level.
             Each question must be clear, accurate, and informative, with plausible distractors and a concise explanation.
-            Always respond with a JSON object in a predictable, consistent structure.
+            Always respond with a JSON object in a predictable, consistent structure. The question and the options should be in Spanish in formal tone.
             Return the result as a well-formatted JSON object using the following structure:
             {{
             "quiz": [
@@ -59,6 +59,7 @@ USER_PROMPT = HumanMessagePromptTemplate.from_template(
             Ensure that:
             - Each question is unique and aligned with the specified skill, context, and difficulty.
             - The output is valid JSON with no extra commentary.
+            - The content is in Spanish and uses a formal tone.
     """
 )
 
