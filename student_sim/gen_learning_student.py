@@ -1,6 +1,6 @@
-from student_sim.learningFunction import *
-from student_sim.simStudent import Student
-from student_sim.skill import Skill
+from learningFunction import *
+from simStudent import Student
+from skill import Skill
 import yaml
 import json
 from pathlib import Path

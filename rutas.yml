@@ -1,5 +1,0 @@
-CSV_PATH : "tmp/ruta_al_csv.csv"
-EVALUATION_CSV_PATH_NON_TRAINED : "tmp/ruta_al_csv_evaluacion.csv"
-EVALUATION_CSV_PATH_TRAINED : "ruta_al_csv_evaluacion_entrenado.csv"
-EVALUATION_PATH : "tmp/"
-MODEL_PATH : "tmp/"

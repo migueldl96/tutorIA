@@ -3,7 +3,7 @@ import numpy as np
 
 # Paso 1: Entrenamos el modelo en una habilidad concreta
 model = Model(seed=42)
-model.fit(data_path='data/as_red.csv')
+model.fit(data_path='../data/as_red.csv')
 
 # Paso 2: Creamos el Roster con estudiantes y la habilidad que se va a seguir
 roster = Roster(students=['78564'], skills='Volume Cylinder', model=model)
