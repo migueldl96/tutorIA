@@ -352,30 +352,30 @@ uvicorn src.student_eval.app.main:app --reload
 ### Probar archivo Guía_rápida.ipynb
 ---
 
-#🤔 What the FAQ
-###🧠 ¿Cómo sabe TutorIA lo que sé y lo que no sé?
+# 🤔 What the FAQ
 
+### 🧠 ¿Cómo sabe TutorIA lo que sé y lo que no sé?
 Utilizamos un modelo probabilístico llamado Bayesian Knowledge Tracing (BKT). Este modelo evalúa tus respuestas a preguntas clave y estima, con cada nueva interacción, la probabilidad de que domines cada habilidad necesaria para la asignatura objetivo.
-###🤖 ¿Las preguntas las genera una IA o son de profes?
 
+### 🤖 ¿Las preguntas las genera una IA o son de profes?
 Las dos cosas. Las preguntas se generan automáticamente usando IA generativa (Azure OpenAI), pero siempre basándose en materiales proporcionados por el profesorado. Así garantizamos que el contenido esté alineado con la asignatura y sus objetivos docentes.
-###🧑‍🏫 ¿El profesorado puede controlar lo que ve la IA?
 
+### 🧑‍🏫 ¿El profesorado puede controlar lo que ve la IA?
 Sí. El profesorado puede seleccionar, excluir o validar los documentos que se usarán como base para la generación de contenido. De esta forma, la IA sólo trabaja con lo que el docente considera adecuado.
-###🔒 ¿Mis datos están seguros?
 
+### 🔒 ¿Mis datos están seguros?
 Totalmente. TutorIA está construido sobre servicios de Azure, que cumple con altos estándares de privacidad y protección de datos. Además, el diseño del sistema minimiza la exposición de información sensible mediante buenas prácticas de seguridad.
-###📚 ¿Y si cambio de asignatura? ¿Tengo que volver a empezar?
 
+### 📚 ¿Y si cambio de asignatura? ¿Tengo que volver a empezar?
 No necesariamente. El perfil de conocimiento del alumno se acumula y actualiza. Si varias asignaturas comparten habilidades previas, esas ya evaluadas se reutilizan para evitar redundancias. Aprende una vez, úsalo muchas veces.
-###🧩 ¿Qué pasa si la IA se equivoca?
 
+### 🧩 ¿Qué pasa si la IA se equivoca?
 La IA genera sugerencias, pero el sistema no se basa únicamente en respuestas correctas o incorrectas, sino en probabilidades. Además, cada interacción se valida con contenido aprobado y el usuario siempre tiene acceso a recursos para contrastar la información.
-###📈 ¿Puedo ver mi progreso?
 
+### 📈 ¿Puedo ver mi progreso?
 Sí. El sistema guarda el histórico de evaluaciones y avances, permitiéndote revisar qué habilidades ya dominas y cuáles siguen pendientes. Así puedes planificar mejor tu aprendizaje antes de entrar en una asignatura.
-###🚀 ¿Esto está en producción?
 
+### 🚀 ¿Esto está en producción?
 Aún no. TutorIA es un prototipo funcional en desarrollo como parte de la competición Reboots 2025. Pero muchas de sus piezas ya funcionan y están listas para integrarse en entornos reales.
 
 ### 🌳 ¿Olmo de verdad se llama Olmo?
