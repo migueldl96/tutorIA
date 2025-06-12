@@ -50,6 +50,16 @@ class EvaluationResponse(TypedDict):
     message: str
     roster_paths: Dict[str, str]
 
+class DataResponse(TypedDict):
+    exists: bool
+    message: str
+    data: Dict
+
+class DeletionResponse(TypedDict):
+    deleted: str
+    message: str
+    
+
 
 class StudentModel:
     """
@@ -72,6 +82,19 @@ class StudentModel:
         self.student_model = None
         self.roster = None
         
+    def load_roaster_config(self):
+        """
+        Carga la configuración del roaster desde un archivo YAML.
+        Si el archivo no existe, devuelve un diccionario vacío.
+        """
+        roster_config_path = self.evaluation_path + "/roster_config.yaml"
+        if self.repository.file_exists(roster_config_path):
+            # Load in bytes
+            roster_config_bytes = self.repository.get_file(roster_config_path)
+            # transform to bytes
+            return yaml.safe_load(roster_config_bytes.decode('utf-8')), roster_config_path
+        else:
+            return {}, roster_config_path
 
     def start_real_time_evaluation(
         self, user_id: str, skill_names: List[str]
@@ -95,19 +118,20 @@ class StudentModel:
 
         logger = logging.getLogger("uvicorn.error")
         logger.info("Starting real time evaluation...")
-
-        # Path al archivo de configuración
-        roster_config_path = self.evaluation_path + "/roster_config.yaml"
-
-        # If file exists in repo, download it
-        if self.repository.file_exists(roster_config_path):
-            roster_config = self.repository.get_file(roster_config_path)
-            logger.info(f"Configuration file {roster_config_path} downloaded")
-        else:
+        
+        try:
+            roster_config, roster_config_path = self.load_roaster_config()
+            logger.info("Roster configuration loaded successfully/created.")
+        except Exception as e:
+            logger.error(f"Error loading roster configuration: {e}")
+            logger.error(f"Creating new roster configuration.")
             roster_config = {}
+            roster_config_path = self.evaluation_path + "/roster_config.yaml"
+
 
         user_entry = roster_config.setdefault(user_id, {})
         existing_skills_map = user_entry.setdefault("skills", {})
+        
         # existing_skills_map: { roster_path1: [skillA,skillB], roster_path2: [skillC], ... }
 
         # Reusar modelos existentes skill a skill
@@ -208,7 +232,7 @@ class StudentModel:
         # Comprobar que el archivo existe
         if not self.repository.file_exists(roster_path):
             logger.error(f"Roster file {roster_path} not found")
-            return {"state": None, "correct_prob": None, "state_prob": None}
+            raise FileNotFoundError(f"Roster file {roster_path} not found")
         # Cargar el roster
         roster_data = self.repository.get_file(roster_path)
         # Deserializar el objeto
@@ -216,7 +240,7 @@ class StudentModel:
             self.roster = pickle.loads(roster_data)
         except Exception as e:
             logger.error(f"Error loading roster: {e}")
-            return {"state": None, "correct_prob": None, "state_prob": None}
+            raise ValueError(f"Error loading roster: {e}")
 
 
         logger.info("Roster loaded successfully")
@@ -339,12 +363,12 @@ class StudentModel:
             return {"students_states": None, "skills_states": None}
 
         # Skill in subject
-        skill_subject = {}
+        self.skill_subject = {}
         for skill in df["skill_name"].tolist():
-            skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
-        students_states = self.calculate_students_states(skill_subject)
+            self.skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
+        students_states = self.calculate_students_states()
 
-        skills_states = self.calculate_skills_states(skill_subject)
+        skills_states = self.calculate_skills_states()
 
         # TODO
         # Lógica para guardar el CSV
@@ -470,12 +494,12 @@ class StudentModel:
             return {"students_states": None, "skills_states": None}
 
         # Skill in subject
-        skill_subject = {}
+        self.skill_subject = {}
         for skill in df["skill_name"].tolist():
-            skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
-        students_states = self.calculate_students_states(skill_subject)
+            self.skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
+        students_states = self.calculate_students_states()
 
-        skills_states = self.calculate_skills_states(skill_subject)
+        skills_states = self.calculate_skills_states()
 
         # TODO
         # Lógica para guardar el CSV
@@ -541,15 +565,25 @@ class StudentModel:
             }
             try:
                 new_df = pd.DataFrame(new_df)
+                # Intentamos convertir order_id y correct a enteros
+                new_df["order_id"] = pd.to_numeric(new_df["order_id"], errors="coerce").astype("Int64")
+                new_df["correct"] = pd.to_numeric(new_df["correct"], errors="coerce").astype("Int64")
+                
+                # Comprobamos si hay valores NaN después de la conversión
+                if new_df["order_id"].isna().any():
+                    raise ValueError("order_id must be an integer")
+                if new_df["correct"].isna().any():
+                    raise ValueError("correct must be an integer")
+                
             except Exception as e:
                 logging.error(f"Error creating DataFrame: {e}")
-                return {"students_states": None, "skills_states": None}
+                raise e
             # Comprobar que coinciden los nombres de las columnas
             if not all(col in df.columns for col in new_df.columns):
                 logging.error(
                     "Column names do not match. It is not possible to update the dataset"
                 )
-                return {"students_states": None, "skills_states": None}
+                raise ValueError("Column names do not match. It is not possible to update the dataset")
 
             df = pd.concat([df, new_df], ignore_index=True)
         else:
@@ -567,185 +601,349 @@ class StudentModel:
                 df = pd.DataFrame(df)
             except Exception as e:
                 logging.error(f"Error creating DataFrame: {e}")
-                return {"students_states": None, "skills_states": None}
+                raise e
 
         # Entrenamos según el caso
         try:
             self.student_model = self.train(df)
         except Exception as e:
             logging.error(f"Error training the model: {e}")
-            return {"students_states": None, "skills_states": None}
+            raise e
 
         # Skill in subject
-        skill_subject = {}
+        self.skill_subject = {}
         for skill in df["skill_name"].tolist():
-            skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
-        students_states = self.calculate_students_states(skill_subject)
+            self.skill_subject[skill] = df[df["skill_name"] == skill]["subject_id"].iloc[0]
+        students_states = self.calculate_students_states()
 
-        skills_states = self.calculate_skills_states(skill_subject)
+        skills_states = self.calculate_skills_states()
 
         # Save the CSV in the repository
         csv_buffer = StringIO()
         df.to_csv(csv_buffer, index=False)
         self.repository.save_file(self.csv_path, csv_buffer.getvalue())
-        return {"students_states": students_states, "skills_states": skills_states}
+        return [{"students_states": students_states, "skills_states": skills_states}]
 
-    def calculate_students_states(
-        self,
-        skill_subject_map: Dict[str, str]
-    ) -> Dict[str, StudentStates]:
+    def get_model_status(self) -> List[Dict]:
         """
-        Para cada estudiante, devuelve dos mapas ('learns' y 'forgets'),
-        cada uno agrupado por subject_id con sus skills y su valor.
-
-        Parameters
-        ----------
-        skill_subject_map : Dict[str, str]
-            Mapea cada skill_name a su subject_id.
-
-        Returns
-        -------
-        Dict[str, StudentStates]
-            Ejemplo de salida:
-            {
-                'alice': {
-                    'learns': {
-                        'MATH': {'fractions': 0.23, 'equations': 0.91},
-                        'PHYS': {'optics': 0.42}
-                    },
-                    'forgets': {
-                        'MATH': {'fractions': 0.00, 'equations': 0.12},
-                        'PHYS': {'optics': 0.05}
-                    }
-                },
-                'bob': { ... }
-            }
+        Devuelve el estado del modelo y los datos de los estudiantes y habilidades.
         """
         if self.student_model is None:
             raise ValueError("Not trained model")
 
-        # 1) extrae un DataFrame plano de parámetros
-        params = self.student_model.params().reset_index()
+        students_states = self.calculate_students_states()
+        skills_states = self.calculate_skills_states()
 
-        # 2) filtra solo learns y forgets, excluyendo el “Default”
+        return [{
+            "students_states": students_states,
+            "skills_states": skills_states
+        }]
+    
+    
+    def calculate_students_states(
+        self
+    ) -> List[Dict]:
+        """
+        Transformado para devolver una lista de objetos JSON:
+        [
+          {
+            "id": alumno_id,
+            "student_subject_list": [
+              {
+                "subject_name": asignatura,
+                "student_skill_list": [
+                  {"name": habilidad, "learn": valor}, …
+                ]
+              }, …
+            ]
+          }, …
+        ]
+        """
+        if self.student_model is None:
+            raise ValueError("Not trained model")
+
+        # 1) extrae parámetros y filtra sólo learns (excluyendo default)
+        params = self.student_model.params().reset_index()
         learn_df = params[
             (params.param == "learns") &
             (params["class"].str.lower() != "default")
         ]
-        forget_df = params[
-            (params.param == "forgets") &
-            (params["class"].str.lower() != "default")
-        ]
 
-        # 3) prepara la salida tipada
-        out: Dict[str, StudentStates] = {}
-
-        # auxiliar para crear dict sujetos→{skill:valor}
-        def nested_subject_dict() -> DefaultDict[str, Dict[str, float]]:
-            return defaultdict(dict)
-
-        alumnos = sorted(set(learn_df["class"]) | set(forget_df["class"]))
-
+        # 2) agrupa por alumno y asignatura
+        student_states: List[Dict] = []
+        alumnos = sorted(learn_df["class"].unique())
         for alumno in alumnos:
-            learns_by_subject = nested_subject_dict()
-            forgets_by_subject = nested_subject_dict()
+            df_al = learn_df[learn_df["class"] == alumno]
+            # dict: subject -> lista de skills
+            subj_map: DefaultDict[str, List[Dict]] = defaultdict(list)
+            for row in df_al.itertuples():
+                subj = self.skill_subject.get(row.skill, "UNKNOWN")
+                subj_map[subj].append({
+                    "name": row.skill,
+                    "learn": row.value
+                })
+            # construye lista de subjects
+            subject_list = [
+                {"subject_name": subj, "student_skill_list": skills}
+                for subj, skills in subj_map.items()
+            ]
+            student_states.append({
+                "id": alumno,
+                "student_subject_list": subject_list
+            })
 
-            # rellena learns
-            for row in learn_df[learn_df["class"] == alumno].itertuples():
-                subj = skill_subject_map.get(row.skill, "UNKNOWN")
-                learns_by_subject[subj][row.skill] = row.value
-
-            # rellena forgets
-            for row in forget_df[forget_df["class"] == alumno].itertuples():
-                subj = skill_subject_map.get(row.skill, "UNKNOWN")
-                forgets_by_subject[subj][row.skill] = row.value
-
-            out[alumno] = {
-                "learns": dict(learns_by_subject),
-                "forgets": dict(forgets_by_subject)
-            }
-
-        return out
+        return student_states
 
 
     def calculate_skills_states(
-        self, skill_subject_map: Dict[str, str]
-    ) -> Dict[str, Dict[str, SkillStates]]:
+        self
+    ) -> List[Dict]:
         """
-        Calcula los estados de las habilidades por asignatura.
-
-        Esta función construye un diccionario anidado que agrupa las habilidades por
-        asignatura (`subject_id`) y asocia a cada habilidad sus parámetros estimados
-        por el modelo BKT: probabilidad a priori (`prior`), tasa de aprendizaje
-        (`learns`), tasa de adivinación (`guesses`), tasa de error (`slips`) y tasa
-        de olvido (`forgets`).
-
-        Estructura de salida:
-        ---------------------
-        {
-            'MATH': {
-                'fractions': {
-                    'prior': 0.23,
-                    'learns': 0.91,
-                    'guesses': 0.40,
-                    'slips': 0.05,
-                    'forgets': 0.00
-                },
-                'equations': {
-                    ...
-                }
-            },
-            'PHYS': {
-                ...
-            }
-        }
-
-        Parameters
-        ----------
-        skill_subject_map : Dict[str, str]
-            Diccionario que mapea cada habilidad (`skill_name`) con su correspondiente ID
-            de asignatura (`subject_id`).
-
-        Raises
-        ------
-        ValueError
-            Si el modelo no ha sido entrenado (`self.student_model is None`).
-
-        Returns
-        -------
-        Dict[str, Dict[str, Dict[str, float]]]
-            Diccionario con los estados de las habilidades organizados por asignatura.
+        Transformado para devolver una lista de objetos JSON:
+        [
+          {
+            "subject_name": asignatura,
+            "subject_skill_list": [
+              {
+                "skill_name": habilidad,
+                "states": [
+                  {"name": "prior", "value": 0.23},
+                  {"name": "learns", "value": 0.91},
+                  ...
+                ]
+              }, …
+            ]
+          }, …
+        ]
         """
-
         if self.student_model is None:
             raise ValueError("Not trained model")
 
-        # parámetros en formato plano
+        # 1) extrae parámetros y filtra sólo default
         params = self.student_model.params().reset_index()
-
-        #  valores "default"
         params["class"] = params["class"].str.lower()
         default_df = params[params["class"] == "default"]
 
-        # 4) Pivot (skill × param → value)
+        # 2) Pivot (skill × param → value)
         wide = default_df.pivot(index="skill", columns="param", values="value")
-        # Asegura presencia de todas las columnas
         for col in ["prior", "learns", "guesses", "slips", "forgets"]:
             if col not in wide.columns:
                 wide[col] = float("nan")
 
-        # construir diccionario anidado subject → skill → métricas
-        out: Dict[str, Dict[str, SkillStates]] = defaultdict(dict)
-
+        # 3) agrupa en estructura subject → lista de skills
+        subject_map: DefaultDict[str, List[Dict]] = defaultdict(list)
         for skill, row in wide.iterrows():
-            subj = skill_subject_map.get(skill, "UNKNOWN")
+            subj = self.skill_subject.get(skill, "UNKNOWN")
+            states = [
+                {"name": col, "value": float(row[col])}
+                for col in ["prior", "learns", "guesses", "slips", "forgets"]
+            ]
+            subject_map[subj].append({
+                "subject_skill_name": skill,
+                "states": states
+            })
 
-            out[subj][skill] = {
-                "prior": float(row["prior"]),
-                "learns": float(row["learns"]),
-                "guesses": float(row["guesses"]),
-                "slips": float(row["slips"]),
-                "forgets": float(row["forgets"]),
-            }
+        # 4) construir lista de subjects
+        subject_list = [
+            {"skill_name": subj, "subject_skill_list": skills}
+            for subj, skills in subject_map.items()
+        ]
+        return subject_list
+    
+    
+    def students_dataset_exists(self) -> DataResponse:
+        """ Check if the student data exists in the repository.
 
-        return dict(out)  # convierte defaultdict en dict normal
+        Returns:
+            response[DataResponse]: A DataResponse object indicating whether the student data exists,
+            and if it does, the data in dictionary format.
+        """
+        if self.repository.file_exists(self.csv_path):
+            # Load the CSV to check if it has data
+            csv_data = self.repository.get_file(self.csv_path)
+            df = pd.read_csv(StringIO(csv_data.decode()))
+            if not df.empty:
+                response = DataResponse(
+                    exists=True, message="Students dataset exists.", data=df.to_dict(orient='records')
+                )
+            else:
+                response = DataResponse(
+                    exists=False, message="Students dataset is empty.", data={} 
+                )
+        else:
+            response = DataResponse(
+                exists=False, message="Students dataset does not exist.", data={}
+            )
+        return response
+
+    def del_students_dataset(self) -> DeletionResponse:
+        """Delete the student data from the repository."""
+        if self.repository.file_exists(self.csv_path):
+            self.repository.delete_file(self.csv_path)
+            response = DeletionResponse(
+                deleted=True, message="Students dataset deleted successfully."
+            )
+        else:
+            response = DeletionResponse(
+                deleted=False, message="No students dataset to delete."
+            )
+        return response
+    
+    def roasters_exists(self) -> DataResponse:
+        """ Check if roaster config data exits, and if every roaster exists."""
+        try:
+            roster_config, _ = self.load_roaster_config()
+        except Exception as e:
+            return DataResponse(
+                exists=False,
+                message=f"Error loading roster configuration: {str(e)}",
+                data={}
+            )
+        logger = logging.getLogger("uvicorn.error")
+        logger.info("Roaster Config File ", roster_config)
+        # Check if the roster config is empty
+        if not roster_config:
+            return DataResponse(
+                exists=False,
+                message="Roster configuration is empty.",
+                data={}
+            )
+        # Extraer todas las rutas de los archivos de roster
+        roster_paths = set()
+        for user_id, user_data in roster_config.items():
+            logger.info(f"Checking user {user_id} in roster config")
+            logger.info(f"Data {user_data}")
+            skills = user_data.get("skills", {})
+            logger.info(f"Skills paths {skills.keys()}")
+            roster_paths = roster_paths.union(list(skills.keys()))
+        
+        logger.info(f"Roster paths found: {roster_paths}")
+
+        roster_paths = list(roster_paths)
+        
+        # Comprobar si los archivos existen
+        response_data = {}
+        for path in roster_paths:
+            if self.repository.file_exists(path):
+                response_data[path] = True
+            else:
+                response_data[path] = False
+        
+        missing = all(not exists for exists in response_data.values())
+        if missing:
+            message = "Some roaster files are missing."
+        else:
+            message = "All roaster files exist."
+        
+        return DataResponse(
+            exists=not missing,
+            message=message,
+            data=response_data
+        )
+        
+    def del_roasters(self, user_id: str) -> DeletionResponse:
+        """Delete all roaster files and the roster configuration file.
+        If user_id is "all", delete all roaster files.
+        Args:
+            user_id (str): ID of the user whose roaster files to delete. If "all", delete all roaster files.
+        Returns:
+            DeletionResponse: A response object indicating whether the deletion was successful and a message.
+                - deleted (bool): Indica si se eliminaron los archivos.
+                - message (str): Mensaje de respuesta.
+        """
+        logger = logging.getLogger("uvicorn.error")
+        try:
+            roster_config, roster_config_path = self.load_roaster_config()
+        except Exception as e:
+            return DeletionResponse(
+                deleted=False,
+                message=f"Error loading roster configuration: {str(e)}"
+            )
+        if not roster_config:
+            return DeletionResponse(
+                deleted=False,
+                message="No roaster config file."
+            )
+        
+        # Eliminar los archivos de roaster
+        for roaster_user_id, user_data in roster_config.items():
+            skills = user_data.get("skills", {})
+            if roaster_user_id != user_id and user_id != "all":
+                continue
+            logger.info(f"Deleting roaster files for user {roaster_user_id}")
+            for path in skills.keys():
+                if self.repository.file_exists(path):
+                    self.repository.delete_file(path)
+        
+        # Eliminar el archivo de configuración del roaster
+        if user_id == "all":
+            if self.repository.file_exists(roster_config_path):
+                logger.info(f"Deleting roster config file at {roster_config_path}")
+                self.repository.delete_file(roster_config_path)
+        else:
+            # Delete user_id information from the roster config
+            roster_config.pop(user_id, None)
+            if self.repository.file_exists(roster_config_path):
+                logger.info(f"Updating roster config file at {roster_config_path}")
+                self.repository.save_file(
+                    roster_config_path,
+                    yaml.dump(roster_config).encode("utf-8")
+                )
+        
+        return DeletionResponse(
+            deleted=True,
+            message=f"Roaster files and configuration of user {user_id} deleted successfully."
+        )
+    
+    def get_student_state_roaster(self, user_id: str):
+        """Get the state of a student from the roaster.
+        
+        Args:
+            user_id (str): ID of the student.
+        
+        Returns:
+            dict: A dictionary with the state of the student in each skill.
+        """
+        logger = logging.getLogger("uvicorn.error")
+        try:
+            roster_config, _ = self.load_roaster_config()
+        except Exception as e:
+            logger.error(f"Error getting student state from roaster: {str(e)}")
+            return {"error": str(e)}
+        
+        if user_id not in roster_config:
+            logger.error(f"User {user_id} not found in roster config.")
+            raise ValueError(f"User {user_id} not found in roster config.")
+        skills = roster_config[user_id].get("skills", {})
+        if not skills:
+            logger.error(f"No skills found for user {user_id}.")
+            return {}
+        
+        # Iteramos sobre los path de los skills
+        for skill_path, skills_names in skills.items():
+            if not self.repository.file_exists(skill_path):
+                logger.error(f"Skill file {skill_path} not found.")
+                continue
+            
+            # Cargar el roster
+            roster_data = self.repository.get_file(skill_path)
+            try:
+                roster = pickle.loads(roster_data)
+            except Exception as e:
+                logger.error(f"Error loading roster: {e}")
+                continue
+            
+            # Obtener el estado del estudiante
+            student_state = []
+            for skill_name in skills_names:
+                state = roster.get_state(skill_name, user_id)
+                if state:
+                    student_state_i = {
+                        "skill_name": skill_name,
+                        "state": state.state_type.name,
+                        "correct_prob": state.current_state["correct_prediction"],
+                        "state_prob": state.current_state["state_prediction"]
+                    }
+                    student_state.append(student_state_i)
+            
+            return student_state 

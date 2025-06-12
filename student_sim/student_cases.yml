@@ -1,4 +1,4 @@
-student_1:
+"1":
   name: "Estudiante 1"
   prob_slip: 0.1
   skills:
@@ -23,12 +23,12 @@ student_1:
       prob_guess: 0.2
       b: 6
 
-student_2:
+"2":
   prob_slip: 0.1
   name: "Estudiante 2"
   skills:
     skill_1:
-      name: "ley_de_ohm"
+      name: "fuerza_electromotriz_y_diferencia_de_potencial"
       prob_guess: 0.7
       subject: Corriente continua
       b: 5
@@ -48,7 +48,7 @@ student_2:
       subject: Corriente continua
       b: 7
 
-student_3:
+"3":
   prob_slip: 0.1
   name: "Estudiante 3"
   skills:
@@ -75,5 +75,35 @@ student_3:
     skill_5:
       name: "leyes_de_snell"
       subject: Optica geometrica
+      prob_guess: 0.1
+      b: 8
+    
+"4":
+  prob_slip: 0.1
+  name: "Estudiante 4"
+  skills:
+    skill_1:
+      name: "corriente_electrica"
+      prob_guess: 0.6
+      subject: Corrientes electricas
+      b: 3
+    skill_2:
+      name: "potencia_electrica"
+      prob_guess: 0.6
+      subject: Corrientes electricas
+      b: 4
+    skill_3:
+      name: "corriente_alterna"
+      prob_guess: 0.2
+      subject: Corrientes electricas
+      b: 10
+    skill_4:
+      name: "electricidad_microscopica"
+      prob_guess: 0.2
+      subject: Corrientes electricas
+      b: 10
+    skill_5:
+      name: "superconductividad"
+      subject: Corrientes electricas
       prob_guess: 0.1
       b: 8
