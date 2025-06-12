@@ -34,6 +34,8 @@ Este es un listado inicial y provisional de tecnologías a utilizar:
 
 ## ⚠️ Estado del proyecto
 
+
 Este repositorio está en **fase de diseño y prototipado temprano**. Toda la funcionalidad, diseño y arquitectura están **sujetos a cambios**. La documentación y el código reflejan únicamente un trabajo exploratorio inicial.
+
 ---
 
