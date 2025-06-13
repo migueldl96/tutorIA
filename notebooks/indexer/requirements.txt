@@ -1,0 +1,15 @@
+PyMuPDF
+python-dotenv
+tqdm
+PyYAML
+
+azure-ai-formrecognizer
+azure-core
+azure-search-documents
+
+langchain-community
+langchain-core
+langchain
+langchain-openai
+
+openai
