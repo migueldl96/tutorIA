@@ -17,14 +17,14 @@ Tres astros 🌠 se han alineado para que TutorIA sea una (semi) realidad:
       <strong>Javier Alvarez</strong><br>
       🧠 .NET Developer<br>
 🔗 <a href="https://www.linkedin.com/in/javier-%C3%A1lvarez-cuevas-1771ba19b/">LinkedIn</a><br>
-      <em>"Mi compás hace cuadrados"</em>
+      <em>"Poniendo purpurina 🎶"</em>
     </td>
     <td align="center">
       <img src="./doc/img/olmo.jpg" width="120" style="border-radius: 100px;"><br>
       <strong>Olmo Arquero</strong><br>
       💻 Data Scientist<br>
 🔗 <a href="https://www.linkedin.com/in/olmo-arquero-peinazo-4a78912ba/">LinkedIn</a><br>
-      <em>"Lalala"</em>
+      <em>"Cuidao', que te modelo"</em>
     </td>
     <td align="center">
       <img src="./doc/img/miguel.jpg"" width="120" style="border-radius: 100px;"><br>
