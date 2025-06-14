@@ -153,14 +153,14 @@ Aquí te contamos cómo se cocina `TutorIA` por dentro: qué tecnologías usamos
 > - **Privacidad**: garantizar la seguridad de datos sensibles y educativos.
 > - **Portabilidad**: permitir despliegue en diferentes nubes o entornos locales según necesidad.
 
-## Menos listas y más imágenes
-Sí, nosotros tambien somos de esos. Vamos al lío.
-
 ## 🧑‍💻 Repositorios
 
 El **repositorio principal** donde se ha desarrollado el frontal y la lógica de comunicación entre módulos es [TutorIABlazor](https://github.com/javieralvarezcu/TutorIABlazor), integrandose posteriormente en este repositorio, abarcando tecnologías como **Blazor**, **.NET** y **Azure**.  
 
 El frontal ha sido creado a partir de un fork del proyecto [TabBlazor](https://github.com/TabBlazor/TabBlazor), que proporciona la base para la interfaz de usuario, y sobre la cual se han realizado personalizaciones y mejoras.
+
+## Menos listas y más imágenes
+Sí, nosotros tambien somos de esos. Vamos al lío.
 
 ### 🧪 Evaluación inicial
 
