@@ -92,10 +92,8 @@
 
     private async void NextQuestion()
     {
-        // Recuperar la pregunta actual como UniqueChoiceQuestion
         var currentQuestion = questions[currentIndex] as UniqueChoiceQuestion;
 
-        // Calcular valor de "correct" para el endpoint
         int correctValue = -1;
         if (currentQuestion != null)
         {
@@ -126,7 +124,6 @@
         }
     }
 
-    // Método para salir al Dashboard
     private void GoToDashboard()
     {
         _navigation.NavigateTo("/dashboard");

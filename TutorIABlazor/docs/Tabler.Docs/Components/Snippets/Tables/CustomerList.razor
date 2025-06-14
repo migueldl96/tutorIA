@@ -5,15 +5,15 @@
         <CardTitle>@Subject.Name</CardTitle>
     </HeaderTemplate>
     <ChildContent>
-        <Column Item="DashboardViewModel" Property="e => e.TeachingUnitName" Title="Unidad didáctica" Sortable />
+        <Column Item="DashboardViewModel" Property="e => e.TeachingUnitName" Title="Unidad didáctica"/>
 
-        <Column Item="DashboardViewModel" Property="e => e.Status" Title="Estado" Sortable Searchable>
+        <Column Item="DashboardViewModel" Property="e => e.Status" Title="Estado">
             <Template>
                 <StatusTypeBadge StatusType="@context.Status" />
             </Template>
         </Column>
 
-        <Column Item="DashboardViewModel" Property="e => e.ProgressBarPercentage" Title="Estado" Sortable>
+        <Column Item="DashboardViewModel" Property="e => e.ProgressBarPercentage" Title="Estado">
             <Template>
                 <div class="d-flex flex-column align-items-start">
                     <!-- Trending Icon & Percentage Display -->
