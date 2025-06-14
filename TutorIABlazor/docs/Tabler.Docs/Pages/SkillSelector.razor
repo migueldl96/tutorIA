@@ -1,0 +1,58 @@
+﻿@page "/select-skills"
+@using System.Globalization
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Tabler.Docs.Model.Dataset
+@inject IDatasetService _datasetService
+@inject NavigationManager _navigation
+
+@layout MinimalLayout
+
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+    <div class="text-center w-75" style="max-width: 50rem;">
+        <h1 class="mb-4">¿Qué habilidades tienes?</h1>
+        <h4 class="mb-4">Selecciona una para continuar</h4>
+
+        @if (skills is null)
+        {
+                    <div class="text-muted">Cargando habilidades...</div>
+        }
+        else
+        {
+                    <div class="card shadow-sm">
+                @foreach (var skill in skills)
+                {
+                    <button class="w-100 text-start border-0 bg-white p-0 user-select-none" style="cursor: pointer;" @onclick="() => OnSkillSelected(skill)">
+                        <div class="card-body border-bottom text-center d-flex justify-content-center align-items-center" style="min-height: 4rem;">
+                            <h5 class="mb-0">@CultureInfo.CurrentCulture.TextInfo.ToTitleCase(skill.Name.Replace("_", " "))</h5>
+                        </div>
+                    </button>
+                }
+                    </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<StudentSkill> skills = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var json = await _localStorage.GetItemAsync<string>("skills_json");
+            skills = JsonSerializer.Deserialize<List<StudentSkill>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles
+                });
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSkillSelected(StudentSkill skill)
+    {
+        await _localStorage.SetItemAsync("selectedSkill", skill);
+        _navigation.NavigateTo("/questionnaire/step");
+    }
+}

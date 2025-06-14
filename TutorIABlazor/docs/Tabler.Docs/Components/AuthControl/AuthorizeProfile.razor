@@ -1,0 +1,46 @@
+﻿@inject Blazored.LocalStorage.ILocalStorageService _localStorage
+@inject NavigationManager _navigation
+
+@if (_authorized)
+{
+    @ChildContent
+}
+else if (!_checking)
+{
+    <div class="d-flex justify-content-center align-items-center min-vh-100">
+        <div>Cargando...</div>
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// Terrible hack to avoid the need of a custom AuthorizeView. ONLY FOR POC PURPOSES
+    /// </summary>
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _authorized = false;
+    private bool _checking = true;
+    private bool _hasChecked = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasChecked)
+        {
+            _hasChecked = true;
+
+            var profile = await _localStorage.GetItemAsync<int?>("profile");
+
+            if (profile == null)
+            {
+                _navigation.NavigateTo("/select-profile", true);
+            }
+            else
+            {
+                _authorized = true;
+                _checking = false;
+                StateHasChanged(); // Fuerza rerender
+            }
+        }
+    }
+}

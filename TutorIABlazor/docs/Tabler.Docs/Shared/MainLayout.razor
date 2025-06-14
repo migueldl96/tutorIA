@@ -1,0 +1,30 @@
+@inherits LayoutComponentBase
+
+<ModalContainer />
+<ToastContainer /> 
+<OffcanvasContainer />
+
+
+<div class="page">
+    @* <MainNavigation /> *@
+
+    <header class="bg-purple text-white d-flex align-items-center px-4 py-2">
+    <img src="_content/Tabler.Docs/img/TutorIALogoWhiteNoText.png" alt="Logo" class="logo-img me-3" />
+    <h1 class="mb-0">TutorIA</h1>
+</header>
+    <div class="page-wrapper">
+        <div class="container-fluid mt-2">
+            @Body
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .logo-img {
+        max-height: 50px;
+        height: auto;
+        width: auto;
+    }
+</style>
+

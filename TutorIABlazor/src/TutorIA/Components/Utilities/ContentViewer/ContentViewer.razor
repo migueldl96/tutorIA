@@ -1,0 +1,14 @@
+@inherits TablerBaseComponent
+@namespace TutorIA
+
+
+@if (!string.IsNullOrWhiteSpace(objectURL)) {
+    <iframe src="@(objectURL + UrlSuffix)" @attributes="@UnmatchedParameters" />
+}
+
+
+
+
+
+
+

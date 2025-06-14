@@ -1,0 +1,53 @@
+@using TutorIA.Services
+
+@namespace TutorIA
+
+@{
+
+    var topEndToasts = ToastService.Toasts.Where(e => e.Options.Position == ToastPosition.TopEnd).ToList();
+    var topStartToasts = ToastService.Toasts.Where(e => e.Options.Position == ToastPosition.TopStart).ToList();
+    var bottomEndToasts = ToastService.Toasts.Where(e => e.Options.Position == ToastPosition.BottomEnd).ToList();
+    var bottomStartToasts = ToastService.Toasts.Where(e => e.Options.Position == ToastPosition.BottomStart).ToList();
+
+    if (topEndToasts.Any())
+    {
+        <div class="mt-1 end-0 position-fixed toast-container" style="z-index: 999999;">
+            @foreach (var toast in topEndToasts)
+            {
+                <TutorIA.Components.Toasts.ToastView Toast="toast" @key="toast" />
+            }
+        </div>
+    }
+
+    if (topStartToasts.Any())
+    {
+        <div class="mt-1 position-fixed toast-container" style="z-index: 999999;">
+            @foreach (var toast in topStartToasts)
+            {
+                <TutorIA.Components.Toasts.ToastView Toast="toast" @key="toast" />
+            }
+        </div>
+    }
+
+     if (bottomEndToasts.Any())
+    {
+        <div class="mb-1 bottom-0 end-0 position-fixed toast-container" style="z-index: 999999;">
+            @foreach (var toast in bottomEndToasts)
+            {
+                <TutorIA.Components.Toasts.ToastView Toast="toast" @key="toast" />
+            }
+        </div>
+    }
+
+      if (bottomStartToasts.Any())
+    {
+        <div class="mb-1 bottom-0 position-fixed toast-container" style="z-index: 999999;">
+            @foreach (var toast in bottomStartToasts)
+            {
+                <TutorIA.Components.Toasts.ToastView Toast="toast" @key="toast" />
+            }
+        </div>
+    }
+
+}
+

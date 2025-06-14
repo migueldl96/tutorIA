@@ -1,0 +1,39 @@
+﻿@using Tabler.Docs.Model
+@using Microsoft.AspNetCore.Components
+@using Tabler.Docs.Model.Questionnaire
+
+<Card Size="CardSize.Default" class="text-start">
+    <CardBody>
+        <CardTitle>
+            <h3>@Question.Header</h3>
+        </CardTitle>
+
+        @if (!string.IsNullOrWhiteSpace(Question.SubHeader))
+        {
+            <h5>@Question.SubHeader</h5>
+        }
+
+        @foreach (var option in Question.Options)
+        {
+            <Checkbox Label="@option.Text"
+                      Value="@option.IsSelected"
+                      ValueChanged="(v) => OnOptionSelected(option)" />
+        }
+    </CardBody>
+</Card>
+
+@code {
+    [Parameter]
+    public UniqueChoiceQuestion Question { get; set; } = new();
+
+    private void OnOptionSelected(AnswerOption selectedOption)
+    {
+        foreach (var opt in Question.Options)
+        {
+            opt.IsSelected = false;
+        }
+
+        selectedOption.IsSelected = true;
+        Question.IsCorrect = selectedOption.IsCorrect;
+    }
+}

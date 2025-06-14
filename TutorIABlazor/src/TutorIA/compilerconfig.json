@@ -1,0 +1,14 @@
+[
+  {
+    "outputFile": "wwwroot/css/TutorIA.css",
+    "inputFile": "Styles/TutorIA.scss"
+  },
+  {
+    "outputFile": "Styles/_custom.css",
+    "inputFile": "Styles/_custom.scss"
+  },
+  {
+    "outputFile": "wwwroot/css/TutorIA.css",
+    "inputFile": "wwwroot/css/TutorIA.scss"
+  }
+]

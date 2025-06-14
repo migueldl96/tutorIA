@@ -1,0 +1,11 @@
+@inherits TablerBaseComponent
+@namespace TutorIA
+<CascadingValue Name="DropdownMenu" Value=this>
+    <HtmlElement Tag="div"
+                 class="@ClassNames"
+                 @onclick="OnClick"
+                 @attributes="@UnmatchedParameters">
+    
+        @ChildContent
+    </HtmlElement>
+    </CascadingValue>

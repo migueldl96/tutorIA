@@ -156,6 +156,12 @@ Aquí te contamos cómo se cocina `TutorIA` por dentro: qué tecnologías usamos
 ## Menos listas y más imágenes
 Sí, nosotros tambien somos de esos. Vamos al lío.
 
+## 🧑‍💻 Repositorios
+
+El **repositorio principal** donde se ha desarrollado el frontal y la lógica de comunicación entre módulos es [TutorIABlazor](https://github.com/javieralvarezcu/TutorIABlazor), integrandose posteriormente en este repositorio, abarcando tecnologías como **Blazor**, **.NET** y **Azure**.  
+
+El frontal ha sido creado a partir de un fork del proyecto [TabBlazor](https://github.com/TabBlazor/TabBlazor), que proporciona la base para la interfaz de usuario, y sobre la cual se han realizado personalizaciones y mejoras.
+
 ### 🧪 Evaluación inicial
 
 Cuando el alumno accede por primera vez a `TutorIA`, lo hace a través de una aplicación web desplegada en un **Azure App Service**. Allí se le invita a realizar una **evaluación diagnóstica**, diseñada para conocer su nivel actual en los conocimientos previos necesarios para una asignatura objetivo.
