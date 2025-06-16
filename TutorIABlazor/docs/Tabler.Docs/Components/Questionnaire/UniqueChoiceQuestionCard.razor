@@ -13,12 +13,14 @@
             <h5>@Question.SubHeader</h5>
         }
 
-        @foreach (var option in Question.Options)
+        @foreach (var (option, idx) in Question.Options.Select((opt, i) => (opt, i)))
         {
-            <Checkbox Label="@option.Text"
+            var letter = ((char)('A' + idx)).ToString();
+            <Checkbox Label="@($"{letter}) {option.Text}")"
                       Value="@option.IsSelected"
                       ValueChanged="(v) => OnOptionSelected(option)" />
         }
+
     </CardBody>
 </Card>
 

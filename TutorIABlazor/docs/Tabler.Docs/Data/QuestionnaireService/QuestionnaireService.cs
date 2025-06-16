@@ -54,6 +54,10 @@ namespace Tabler.Docs.Data.QuestionnaireService
             {
                 Header = q.question,
                 SubHeader = q.description,
+                Explanation = q.explanation,
+                Filename = q.filename,
+                Description = q.description,
+                Uri = q.uri,
                 Options = new List<AnswerOption>
         {
             new() { Text = q.optionA, IsCorrect = q.correct_answer.Equals("A", StringComparison.OrdinalIgnoreCase) },

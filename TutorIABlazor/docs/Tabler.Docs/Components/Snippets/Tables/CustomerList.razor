@@ -2,10 +2,14 @@
 
 <Table Item="DashboardViewModel" Items="DashboardViewModelCollection">
     <HeaderTemplate>
+    @if (ShowSubject)
+    {
         <CardTitle>@Subject.Name</CardTitle>
+    }
     </HeaderTemplate>
+
     <ChildContent>
-        <Column Item="DashboardViewModel" Property="e => e.TeachingUnitName" Title="Unidad didáctica"/>
+        <Column Item="DashboardViewModel" Property="e => e.TeachingUnitName" Title="Unidad didáctica" />
 
         <Column Item="DashboardViewModel" Property="e => e.Status" Title="Estado">
             <Template>
@@ -35,6 +39,7 @@
 @code {
     [Parameter] public StudentSubject Subject { get; set; } = new StudentSubject();
     [Parameter] public List<DashboardViewModel> DashboardViewModelCollection { get; set; } = new List<DashboardViewModel>();
+    [Parameter] public bool ShowSubject { get; set; } = true;
 
     // Método para obtener el color del texto según el valor de ProgressIconPercentage
     private string GetProgressColorClass(decimal progressIconPercentage)

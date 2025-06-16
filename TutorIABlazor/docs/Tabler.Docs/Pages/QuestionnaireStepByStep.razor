@@ -1,4 +1,5 @@
 ﻿@page "/questionnaire/step"
+@using System.Globalization
 @using Tabler.Docs.Components.Questionnaire
 @using Tabler.Docs.Data.QuestionnaireService
 @using Tabler.Docs.Model.Dataset
@@ -11,34 +12,55 @@
 <div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
     <div class="w-75" style="max-width: 50rem;">
         <h4 class="text-center mb-4">@statusInfo</h4>
+        @if (studentSubject != null)
+        {
+            <RowCol Sm="12" Lg="6">
+                <Tabler.Docs.Components.Snippets.Tables.CustomerList Subject=studentSubject DashboardViewModelCollection="dashboardViewModelCollection" ShowSubject="false"/>
+            </RowCol>
+        }
 
         @if (questions is null || currentIndex >= questions.Count)
         {
-                <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
-                    <span class="loader2"></span>
-                </div>
+            <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+                <span class="loader2"></span>
+            </div>
         }
         else
         {
-                <div class="p">
-                    <Progress Size="ProgressSize.Small" Percentage="@(ProgressBar)" />
-                </div>
-                <div>
+            <div class="p">
+                <Progress Size="ProgressSize.Small" Percentage="@(ProgressBar)" />
+            </div>
+            <div>
                 @switch (questions[currentIndex])
                 {
                     case UniqueChoiceQuestion mcq:
-                                    <UniqueChoiceQuestionCard Question="@mcq" />
+                        <UniqueChoiceQuestionCard Question="@mcq" />
                         break;
 
                     default:
-                                    <p>Tipo de pregunta no soportado.</p>
+                        <p>Tipo de pregunta no soportado.</p>
                         break;
                 }
 
-                    <button class="btn btn-purple mt-3 float-end" @onclick="NextQuestion">Siguiente</button>
-                    <!-- Botón de salir -->
-                    <button class="btn btn-secondary mt-3" @onclick="GoToDashboard">Salir al Dashboard</button>
-                </div>
+                @if (!isAnswered)
+                {
+                    <button class="btn btn-purple mt-3 float-end" @onclick="CheckAnswer">Comprobar respuesta</button>
+                }
+                else
+                {
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5>Respuesta @(currentQuestion.IsCorrect ? "correcta." : "incorrecta.")</h5>
+                            <p><strong>Explicación:</strong> @currentQuestion.Explanation</p>
+                            <p><a href="@currentQuestion.Uri" target="_blank">Ver más</a></p>
+                        </div>
+                    </div>
+                    <button class="btn btn-purple mt-3 float-end" @onclick="NextQuestion">Siguiente pregunta</button>
+                }
+
+                <!-- Botón de salir -->
+                <button class="btn btn-secondary mt-3" @onclick="GoToDashboard">Salir al Dashboard</button>
+            </div>
         }
     </div>
 </div>
@@ -56,8 +78,13 @@
     }
 
     @@keyframes rotation {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 </style>
 
@@ -69,6 +96,10 @@
     int UserId = 0;
     StudentSkill Skill = new();
     private int ProgressBar = 0;
+    private bool isAnswered = false;
+    private UniqueChoiceQuestion currentQuestion;
+    private StudentSubject studentSubject;
+    private List<DashboardViewModel> dashboardViewModelCollection = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -77,17 +108,65 @@
             statusInfo = "Obteniendo Id del usuario...";
             StateHasChanged();
             UserId = await _localStorage.GetItemAsync<int?>("profile") ?? 0;
+            statusInfo = "Obteniendo estado académico del usuario...";
+            StateHasChanged();
+            studentSubject = await _datasetService.GetStudentSubjectByUserIdAsync(UserId);
             Skill = await _localStorage.GetItemAsync<StudentSkill>("selectedSkill");
+            await UpdateStatusCard();
             statusInfo = "Cargando preguntas...";
             StateHasChanged();
-            var cachedQuestions = await _questionnaireService.RequestQuestionsToAi(Skill.Name, "easy", 3);
+            List<QuestionBase> cachedQuestions = await _questionnaireService.RequestQuestionsToAi(Skill.Name, "easy", 3);
             statusInfo = "Iniciando evaluación en tiempo real...";
             StateHasChanged();
             startRealTimeEvaluationResponse = await _questionnaireService.StartRealTimeEvaluation(UserId, new string[] { Skill.Name });
             questions = cachedQuestions;
-            statusInfo = $"Evaluación iniciada.\n{startRealTimeEvaluationResponse.ToString()}";
+            statusInfo = $"Evaluación iniciada.";
+            // statusInfo = $"Evaluación iniciada.\n{startRealTimeEvaluationResponse.ToString()}";
             StateHasChanged();
         }
+    }
+
+    private async Task UpdateStatusCard()
+    {
+        StatusType statusType = StatusType.Inactivo;
+        int progressBarPercentage = (int)Math.Round(Skill.Learn * 100);
+        int progressIconPercentage = 0;
+        List<GetStudentStateRoasterResponse> getStudentStateRoaster = await _questionnaireService.GetStudentStateRoaster(UserId);
+        var stateRoaster = getStudentStateRoaster?.FirstOrDefault(x => x.skill_name == Skill.Name);
+        if (stateRoaster != null)
+        {
+            switch (stateRoaster.state)
+            {
+                case "MASTERED":
+                    statusType = StatusType.Maestria_Alcanzada;
+                    break;
+                case "UNMASTERED":
+                    statusType = StatusType.En_Progreso;
+                    break;
+                default:
+                    statusType = StatusType.Inactivo;
+                    break;
+            }
+
+            progressBarPercentage = (int)Math.Round(stateRoaster.state_prob * 100);
+            progressIconPercentage = (int)Math.Round(stateRoaster.state_prob * 100) - (int)Math.Round(Skill.Learn * 100);
+        }
+        dashboardViewModelCollection = new(){new DashboardViewModel
+            {
+                TeachingUnitName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Skill.Name.Replace("_", " ")),
+                Status = statusType,
+                ProgressBarPercentage = progressBarPercentage,
+                ProgressIconPercentage = progressIconPercentage
+            }};
+        StateHasChanged();
+    }
+
+    private void CheckAnswer()
+    {
+        // Mostrar la respuesta correcta y la explicación
+        isAnswered = true;
+        currentQuestion = questions[currentIndex] as UniqueChoiceQuestion;
+        StateHasChanged(); // Para renderizar la explicación y la respuesta
     }
 
     private async void NextQuestion()
@@ -97,9 +176,11 @@
         int correctValue = -1;
         if (currentQuestion != null)
         {
-            if (currentQuestion.Options.Any(o => o.IsSelected))
+            // Revisamos si la opción seleccionada es la correcta
+            var selectedOption = currentQuestion.Options.FirstOrDefault(o => o.IsSelected);
+            if (selectedOption != null)
             {
-                correctValue = currentQuestion.IsCorrect ? 1 : 0;
+                correctValue = selectedOption.IsCorrect ? 1 : 0;
             }
         }
 
@@ -120,6 +201,8 @@
         else
         {
             ProgressBar = (int)(((double)(currentIndex) / questions.Count) * 100);
+            isAnswered = false; // Reseteamos la variable para la siguiente pregunta
+            await UpdateStatusCard();
             StateHasChanged();
         }
     }
