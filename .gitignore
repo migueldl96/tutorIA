@@ -11,3 +11,4 @@ data/skill_builder_data.csv
 *.pkl
 tmp
 .env
+.zip
