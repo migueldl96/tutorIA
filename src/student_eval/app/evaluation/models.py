@@ -910,7 +910,7 @@ class StudentModel:
         except Exception as e:
             logger.error(f"Error getting student state from roaster: {str(e)}")
             return {"error": str(e)}
-        
+        logger.info(f"Roster Config File {roster_config}")
         if user_id not in roster_config:
             logger.error(f"User {user_id} not found in roster config.")
             raise ValueError(f"User {user_id} not found in roster config.")
@@ -919,12 +919,14 @@ class StudentModel:
             logger.error(f"No skills found for user {user_id}.")
             return {}
         
+        student_state = []
+        
         # Iteramos sobre los path de los skills
         for skill_path, skills_names in skills.items():
             if not self.repository.file_exists(skill_path):
                 logger.error(f"Skill file {skill_path} not found.")
                 continue
-            
+            logger.info(skill_path)
             # Cargar el roster
             roster_data = self.repository.get_file(skill_path)
             try:
@@ -934,7 +936,6 @@ class StudentModel:
                 continue
             
             # Obtener el estado del estudiante
-            student_state = []
             for skill_name in skills_names:
                 state = roster.get_state(skill_name, user_id)
                 if state:
@@ -944,6 +945,7 @@ class StudentModel:
                         "correct_prob": state.current_state["correct_prediction"],
                         "state_prob": state.current_state["state_prediction"]
                     }
+                    logger.info(student_state_i)
                     student_state.append(student_state_i)
             
-            return student_state 
+        return student_state
