@@ -1,0 +1,68 @@
+﻿@page "/devpanel"
+@using System.IO
+@using Tabler.Docs.Data.DatasetService
+@using System.Text.Json
+@using Tabler.Docs.Model.Dataset
+
+
+<h3>DevPanel</h3>
+
+<div class="mb-3">
+    <button class="btn btn-secondary" @onclick="CallCheckStudentDataset">Check Student Dataset</button>
+    <button class="btn btn-secondary" @onclick="CallCheckDataset">Check Dataset</button>
+</div>
+
+@if (response != string.Empty)
+{
+    <h5>Response:</h5>
+    <pre>@response</pre>
+}
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@code {
+    private string jsonInput = string.Empty;
+    private string response = string.Empty;
+    private string? errorMessage;
+
+    private async Task CallCheckStudentDataset()
+    {
+        response = string.Empty;
+        StateHasChanged();
+        errorMessage = null;
+        try
+        {
+            var objectReponse = await _datasetService.CheckStudentDataset();
+            response = JsonSerializer.Serialize(objectReponse, new JsonSerializerOptions { WriteIndented = true });
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al llamar a CheckDataset: {ex.Message}";
+        }
+    }
+
+    private async Task CallCheckDataset()
+    {
+        response = string.Empty;
+        StateHasChanged();
+        errorMessage = null;
+        try
+        {
+            var objectReponse = await _datasetService.CheckDataset();
+            response = JsonSerializer.Serialize(objectReponse, new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
+                });
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al llamar a CheckDataset: {ex.Message}";
+        }
+    }
+}

@@ -1,0 +1,44 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+<ModalContainer />
+<ToastContainer />
+<OffcanvasContainer />
+
+
+<div class="page">
+    <header class="bg-purple text-white d-flex align-items-center">
+        <button class="btn btn-link text-white d-flex align-items-center me-auto" @onclick="NavigateToDashboard" style="text-decoration: none; background-color: transparent;">
+            <img src="_content/Tabler.Docs/img/TutorIALogoWhiteNoText.png" alt="Logo" class="logo-img me-2" />
+            <h1 class="mb-0" style="font-size: 1.2rem;">TutorIA</h1>
+        </button>
+
+        <button class="btn btn-link text-white" @onclick="Logout" style="text-decoration: none; background-color: transparent;">
+            Cerrar sesión
+        </button>
+    </header>
+    <div class="page-wrapper">
+        <div class="container-fluid mt-2">
+            @Body
+        </div>
+    </div>
+</div>
+
+<style>
+    .logo-img {
+        max-height: 50px;
+        height: auto;
+        width: auto;
+    }
+</style>
+
+@code {
+    private void NavigateToDashboard()
+    {
+        Navigation.NavigateTo("/dashboard");
+    }
+
+    private void Logout()
+    {
+        Navigation.NavigateTo("/select-profile");
+    }
+}

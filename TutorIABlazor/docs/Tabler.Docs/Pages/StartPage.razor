@@ -1,0 +1,96 @@
+@page "/dashboard"
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using System.Globalization
+@using Tabler.Docs.Data.QuestionnaireService
+@using Tabler.Docs.Model.Dataset
+@using Tabler.Docs.Model.Evaluation
+@using Tabler.Docs.Shared
+@inject IQuestionnaireService _questionnaireService;
+
+<AuthorizeProfile />
+<TutorIA.PageMainTitle>¡Hola @(userData?.Name)!</TutorIA.PageMainTitle>
+<PagePretitle>
+    Tu camino, a tu ritmo
+</PagePretitle>
+
+<Row class="mt-1 row-deck row-cards">
+    <RowCol Sm="12" Md="6" Lg="3">
+        <Tabler.Docs.Components.Snippets.Statistics.StartRealTimeEvaluation Skills=@(skills) />
+    </RowCol>
+    <RowCol Sm="12" Md="6" Lg="3">
+        <Tabler.Docs.Components.Snippets.Statistics.StatisticsMedium />
+    </RowCol>
+    @if (studentSubject != null)
+    {
+        <RowCol Sm="12" Lg="6">
+            <Tabler.Docs.Components.Snippets.Tables.CustomerList Subject=studentSubject DashboardViewModelCollection="dashboardViewModelCollection" />
+        </RowCol>
+    }
+</Row>
+
+@code {
+    private User userData = new();
+    private List<StudentSkill> skills = new();
+    private StudentSubject studentSubject;
+    private List<DashboardViewModel> dashboardViewModelCollection = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            var userId = await _localStorage.GetItemAsync<int?>("profile") ?? 0;
+
+            userData = _authService.GetUserById(userId);
+            skills = await _datasetService.GetStudentSkillsByUserIdAsync(userId);
+            var options = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    WriteIndented = true
+                };
+
+            string json = JsonSerializer.Serialize(skills, options);
+            await _localStorage.SetItemAsync("skills_json", json);
+
+            studentSubject = await _datasetService.GetStudentSubjectByUserIdAsync(userId);
+            List<GetStudentStateRoasterResponse> getStudentStateRoaster = await _questionnaireService.GetStudentStateRoaster(userId);
+            foreach (var skill in skills)
+            {
+
+                StatusType statusType = StatusType.Inactivo;
+                int progressBarPercentage = (int)Math.Round(skill.Learn * 100);
+                int progressIconPercentage = 0;
+                var stateRoaster = getStudentStateRoaster?.FirstOrDefault(x => x.skill_name == skill.Name);
+                if (stateRoaster != null)
+                {
+                    switch (stateRoaster.state)
+                    {
+                        case "MASTERED":
+                            statusType = StatusType.Maestria_Alcanzada;
+                            break;
+                        case "UNMASTERED":
+                            statusType = StatusType.En_Progreso;
+                            break;
+                        default:
+                            statusType = StatusType.Inactivo;
+                            break;
+                    }
+
+                    progressBarPercentage = (int)Math.Round(stateRoaster.state_prob * 100);
+                    progressIconPercentage = (int)Math.Round(stateRoaster.state_prob * 100) - (int)Math.Round(skill.Learn * 100);
+                }
+                dashboardViewModelCollection.Add(new DashboardViewModel
+                    {
+                        TeachingUnitName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(skill.Name.Replace("_", " ")),
+                        Status = statusType,
+                        ProgressBarPercentage = progressBarPercentage,
+                        ProgressIconPercentage = progressIconPercentage
+                    });
+            }
+
+            StateHasChanged();
+        }
+    }
+}
+

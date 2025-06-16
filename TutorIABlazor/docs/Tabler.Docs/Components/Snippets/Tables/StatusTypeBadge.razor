@@ -1,0 +1,26 @@
+@using Tabler.Docs.Model.Dataset
+
+<Badge BackgroundColor="GetBackgroundColor()">@StatusType.ToString().Replace('_',' ')</Badge>
+
+@code {
+    [Parameter] public StatusType StatusType { get; set; }
+
+    
+    private TablerColor GetBackgroundColor() {
+        switch (StatusType)
+        {
+            case StatusType.En_Progreso:
+                return TablerColor.Purple;
+            case StatusType.Maestria_Alcanzada:
+                return TablerColor.Success;
+            case StatusType.Inactivo:
+                return TablerColor.Default;
+            default:
+                return TablerColor.Default;
+        }
+    }
+
+
+
+}
+

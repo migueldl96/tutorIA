@@ -1,0 +1,70 @@
+﻿@page "/questionnaire/step"
+@using Tabler.Docs.Components.Questionnaire
+@using Tabler.Docs.Data.QuestionnaireService
+@using Tabler.Docs.Model.Evaluation
+@using Tabler.Docs.Model.Questionnaire
+@layout MinimalLayout
+@inject IQuestionnaireService _questionnaireService
+@inject NavigationManager Navigation
+
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+    <div class="w-75" style="max-width: 50rem;">
+
+        <h1 class="text-center mb-4">Questionnaire Step By Step</h1>
+        <h4 class="text-center mb-4">@statusInfo</h4>
+
+        @if (questions is null || currentIndex >= questions.Count)
+        {
+            <p class="text-center">¡Cuestionario completado!</p>
+        }
+        else
+        {
+            <div>
+                @switch (questions[currentIndex])
+                {
+                    case MultipleChoiceQuestion mcq:
+                        <MultipleChoiceQuestionCard Question="@mcq" />
+                        break;
+
+                    default:
+                        <p>Tipo de pregunta no soportado.</p>
+                        break;
+                }
+
+                <button class="btn btn-primary mt-3 float-end" @onclick="NextQuestion">Siguiente</button>
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    private List<QuestionBase>? questions;
+    private int currentIndex = 0;
+    private StartRealTimeEvaluationResponse startRealTimeEvaluationResponse = null;
+    private string statusInfo = "Inicializando cuestionario";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            statusInfo = "Cargando preguntas...";
+            StateHasChanged();
+            var cachedQuestions = await _questionnaireService.GetQuestionByIdsAsync(new int[] { 2, 3, 4 });
+            statusInfo = "Obteniendo Id del usuario...";
+            StateHasChanged();
+            var userId = await _localStorage.GetItemAsync<int?>("profile") ?? 0;
+            statusInfo = "Iniciando evaluación en tiempo real...";
+            StateHasChanged();
+            startRealTimeEvaluationResponse = await _questionnaireService.StartRealTimeEvaluation(userId, new string[] { "algebra", "lens" });
+            statusInfo = $"Evaluación iniciada.\n{startRealTimeEvaluationResponse.ToString()}";
+            questions = cachedQuestions;
+            StateHasChanged();
+        }
+    }
+
+    private void NextQuestion()
+    {
+        currentIndex++;
+    }
+}

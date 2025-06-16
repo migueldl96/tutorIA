@@ -1,0 +1,72 @@
+@using Tabler.Docs.Model.Dataset
+
+<Table Item="DashboardViewModel" Items="DashboardViewModelCollection">
+    <HeaderTemplate>
+        <CardTitle>@Subject.Name</CardTitle>
+    </HeaderTemplate>
+    <ChildContent>
+        <Column Item="DashboardViewModel" Property="e => e.TeachingUnitName" Title="Unidad didáctica"/>
+
+        <Column Item="DashboardViewModel" Property="e => e.Status" Title="Estado">
+            <Template>
+                <StatusTypeBadge StatusType="@context.Status" />
+            </Template>
+        </Column>
+
+        <Column Item="DashboardViewModel" Property="e => e.ProgressBarPercentage" Title="Estado">
+            <Template>
+                <div class="d-flex flex-column align-items-start">
+                    <!-- Trending Icon & Percentage Display -->
+                    <div class="ms-auto">
+                        <span class="@GetProgressColorClass(@context.ProgressIconPercentage) d-inline-flex align-items-center lh-1">
+                            @(@context.ProgressIconPercentage.ToString())%
+                            <Icon class="ms-1" Size="16" IconType="@GetTrendingIcon(@context.ProgressIconPercentage)" />
+                        </span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <Progress Color="TablerColor.Primary" Percentage="@context.ProgressBarPercentage" />
+                </div>
+            </Template>
+        </Column>
+    </ChildContent>
+</Table>
+
+@code {
+    [Parameter] public StudentSubject Subject { get; set; } = new StudentSubject();
+    [Parameter] public List<DashboardViewModel> DashboardViewModelCollection { get; set; } = new List<DashboardViewModel>();
+
+    // Método para obtener el color del texto según el valor de ProgressIconPercentage
+    private string GetProgressColorClass(decimal progressIconPercentage)
+    {
+        if (progressIconPercentage > 0)
+        {
+            return "text-success"; // Verde
+        }
+        else if (progressIconPercentage < 0)
+        {
+            return "text-danger"; // Rojo
+        }
+        else
+        {
+            return "text-dark"; // Negro
+        }
+    }
+
+    // Método para obtener el icono según el valor de ProgressIconPercentage
+    private IIconType GetTrendingIcon(int progressIconPercentage)
+    {
+        if (progressIconPercentage > 0)
+        {
+            return TablerIcons.Trending_up;
+        }
+        else if (progressIconPercentage < 0)
+        {
+            return TablerIcons.Trending_down;
+        }
+        else
+        {
+            return TablerIcons.Activity;
+        }
+    }
+}

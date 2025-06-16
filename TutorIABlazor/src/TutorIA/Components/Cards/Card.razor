@@ -1,0 +1,19 @@
+@inherits TablerBaseComponent
+@namespace TutorIA
+
+    <HtmlElement Tag="@HtmlTag"
+                 class="@ClassNames"
+                 href="@Href"
+                 @onclick="OnClick"
+                 @attributes="@UnmatchedParameters">
+        @if (StatusTop != TablerColor.Default)
+        {
+            <div class="@StatusClassNames("top", StatusTop)"></div>
+        }
+        @if (StatusStart != TablerColor.Default)
+        {
+            <div class="@StatusClassNames("start", StatusStart)"></div>
+        }
+     
+        @ChildContent
+    </HtmlElement>

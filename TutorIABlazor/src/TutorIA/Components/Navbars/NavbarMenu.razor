@@ -1,0 +1,14 @@
+@inherits TablerBaseComponent
+@namespace TutorIA
+
+<HtmlElement Tag="@HtmlTag"
+             class="@ClassNames"
+             @onclick="OnClick"
+             @attributes="@UnmatchedParameters">
+
+    
+        <ul class="navbar-nav" @onclick=Navbar.ToogleExpand>
+            @ChildContent
+        </ul>
+ 
+</HtmlElement>

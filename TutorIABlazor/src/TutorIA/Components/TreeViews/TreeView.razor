@@ -1,0 +1,12 @@
+@namespace TutorIA
+@typeparam TItem
+
+@if (Items != null)
+{
+    <CascadingValue Name="Root" Value="this">
+        <TutorIA.Components.TreeViews.TreeViewNodes Items="Items"
+                                                      Template="Template"
+                                                      ChildSelectorAsync="ChildSelectorAsync"
+                                                      AllowDrop="EnableDragAndDrop" />
+    </CascadingValue>
+}
